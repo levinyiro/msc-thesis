@@ -1,0 +1,12 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "outDir": "./out-tsc/worker",
+      "types": [],
+      "lib": ["es2020", "webworker"]
+    },
+    "include": [
+      "src/**/*.worker.ts"
+    ]
+  }

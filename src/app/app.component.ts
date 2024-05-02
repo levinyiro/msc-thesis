@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { WorkerService } from './workers/worker.service';
 
 @Component({
   selector: 'app-root',
@@ -7,10 +6,23 @@ import { WorkerService } from './workers/worker.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  constructor(private workerService: WorkerService) {}
+  worker?: Worker;
+
+  constructor() {}
 
   ngOnInit() {
     const canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-    this.workerService.postCanvas(canvas);
+
+
+  }
+
+  ngAfterViewInit() {
+    this.worker = new Worker(new URL('./_workers/threejs.worker.ts', import.meta.url));
+    this.worker.onmessage = ( ({ data }) => {
+      console.log('Message from worker:', data);
+    });
+    this.worker.onerror = (error) => {
+      console.log('Worker error', error);
+    };
   }
 }

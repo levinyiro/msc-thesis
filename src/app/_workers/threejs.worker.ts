@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
-const insideWorker = require("offscreen-canvas/inside-worker");
+import insideWorker from 'offscreen-canvas/inside-worker';
 
 @Injectable({
   providedIn: 'root'
@@ -13,11 +13,12 @@ export class WorkerService {
     console.log('Worker initialized');
   }
 
-  private handleWorkerMessage(e: any) {
-    console.log('hello');
-    
-    if (e.data.canvas) {
-      const canvas = e.data.canvas;
+  private handleWorkerMessage(event: MessageEvent<any>) {
+    console.log('Worker received message:', event.data);
+    const message = event.data;
+
+    if (message.type === 'canvas') {
+      const canvas = message.canvas;
       const context = canvas.getContext('webgl');
 
       const scene = new THREE.Scene();
@@ -36,7 +37,7 @@ export class WorkerService {
       scene.add(ambientLight);
 
       const geometry = new THREE.SphereGeometry(3, 64, 32);
-      var material = new THREE.MeshPhongMaterial({ color: 0xef476f });
+      const material = new THREE.MeshPhongMaterial({ color: 0xef476f });
       const object = new THREE.Mesh(geometry, material);
       scene.add(object);
 
@@ -50,25 +51,14 @@ export class WorkerService {
 
       renderer.render(scene, camera);
 
-      let isDragging = false;
-      let previousX = 0;
-      let previousY = 0;
-
-      const rotateCamera = (deltaX: any, deltaY: any) => {
-          const sensitivity = 0.01;
-          camera.rotation.y -= deltaX * sensitivity;
-          camera.rotation.x -= deltaY * sensitivity;
-          camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
-      };
-
       const animate = () => {
-          requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
 
-          const spotLightAngle = Date.now() * 0.0005;
-          spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
-          spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
+        const spotLightAngle = Date.now() * 0.0005;
+        spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
+        spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
 
-          renderer.render(scene, camera);
+        renderer.render(scene, camera);
       };
 
       animate();
