@@ -21,14 +21,13 @@
     "useDefineForClassFields": false,
     "lib": [
       "ES2022",
-      "dom"
-    ],
-    "types": ["node"]
+      "dom",
+    ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
   }
 }

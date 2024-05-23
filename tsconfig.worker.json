@@ -2,11 +2,16 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-      "outDir": "./out-tsc/worker",
-      "types": [],
-      "lib": ["es2020", "webworker"]
+        "outDir": "./out-tsc/worker",
+        "types": [
+            "node"
+        ],
+        "lib": [
+            "es2020",
+            "webworker"
+        ]
     },
     "include": [
-      "src/**/*.worker.ts"
+        "src/**/*.worker.ts"
     ]
-  }
+}

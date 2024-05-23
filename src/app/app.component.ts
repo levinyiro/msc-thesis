@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -7,22 +7,31 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   worker?: Worker;
+  canvas?: OffscreenCanvas;
+  @ViewChild('divContainer') divContainer!: ElementRef<HTMLDivElement>;
 
   constructor() {}
 
   ngOnInit() {
-    const canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-
-
+    this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
   }
 
   ngAfterViewInit() {
-    this.worker = new Worker(new URL('./_workers/threejs.worker.ts', import.meta.url));
-    this.worker.onmessage = ( ({ data }) => {
-      console.log('Message from worker:', data);
-    });
-    this.worker.onerror = (error) => {
-      console.log('Worker error', error);
+    this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));
+
+    this.worker.onmessage = ({ data }) => {
+      if (data.type === 'render') {
+        this.divContainer.nativeElement.innerHTML = '';
+        this.divContainer.nativeElement.appendChild(data.canvas);
+      }
     };
+
+    this.worker.onerror = ( (error) => {
+      console.log('Error on worker', error);
+    });
+
+    if (this.canvas && this.worker) {
+      this.worker.postMessage({ type: 'canvas', canvas: this.canvas }, [this.canvas]);
+    }
   }
 }

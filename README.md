@@ -1,4 +1,4 @@
-# ThreejsProject
+# Threejs2
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.0.2.
 
@@ -27,24 +27,7 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
 
 
-https://github.com/bbarn3y/2022-2023-2-korszeru-angular-alkalmazasok/blob/1634a0d6d4ec215e67e6c7f8fc5400505d73bce9/angular.json#L35
-
-https://github.com/bbarn3y/2022-2023-2-korszeru-angular-alkalmazasok/blob/master/tsconfig.worker.json
-
-https://github.com/bbarn3y/2022-2023-2-korszeru-angular-alkalmazasok/blob/master/src/app/_workers/konva.worker.ts
-
-innentől kezdve nem angular service
-csak főszálon van angular
-workerben csak üzenetküldés és ts
-
-heavy lifting - amit optimalizálni szeretnénk (threeJS)
-eközött és az angular között messagekkel kommunikál
-
-worker definiálás: https://github.com/bbarn3y/2022-2023-2-korszeru-angular-alkalmazasok/blob/1634a0d6d4ec215e67e6c7f8fc5400505d73bce9/src/app/konva/konva.component.ts#L45C1-L46C1
-
-worker feliratkozás a messagekben a workerben kell legyen
-
-mindkét irányba kell felirakozás
-angularban: https://github.com/bbarn3y/2022-2023-2-korszeru-angular-alkalmazasok/blob/1634a0d6d4ec215e67e6c7f8fc5400505d73bce9/src/app/konva/konva.component.ts#L46C17-L46C26
-
-workerben a felirazkozás, azokra az üzikre, amit a főszál küld: https://github.com/bbarn3y/2022-2023-2-korszeru-angular-alkalmazasok/blob/1634a0d6d4ec215e67e6c7f8fc5400505d73bce9/src/app/_workers/konva.worker.ts#L26
+## todo
+refactoring, comments
+Make canvas work
+https://konvajs.org/docs/sandbox/Web_Worker.html
