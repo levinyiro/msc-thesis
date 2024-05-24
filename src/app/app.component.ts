@@ -28,10 +28,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
 
-      htmlCanvas.addEventListener('mousedown', (event: any) => {
+      htmlCanvas.addEventListener('mousemove', (event: any) => {
         if (this.worker) {
           this.worker.postMessage({
-            type: 'mousedown',
+            type: 'mousemove',
             mouseX: event.clientX,
             mouseY: event.clientY
           });
