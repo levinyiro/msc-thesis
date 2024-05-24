@@ -16,6 +16,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    // connect to worker
     this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));
 
     const htmlCanvas = document.getElementById('canvas') as any;
@@ -26,8 +27,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (hasOffscreenSupport) {
       var offscreen = htmlCanvas.transferControlToOffscreen() as any;
 
+      // send canvas offscreen to worker
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
 
+      // event handling and sending to worker
       htmlCanvas.addEventListener('mousemove', (event: any) => {
         if (this.worker) {
           this.worker.postMessage({

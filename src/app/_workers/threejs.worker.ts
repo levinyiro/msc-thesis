@@ -5,6 +5,7 @@ insideWorker((event: any) => {
   if (event.data.canvas) {
     const canvas = event.data.canvas;
 
+    // get canvas from request
     const renderer = new THREE.WebGLRenderer({ canvas: canvas });
 
     renderer.setClearColor(0xa9f8fb);
@@ -48,6 +49,7 @@ insideWorker((event: any) => {
 
     animate();
 
+    // handling user event
     self.onmessage = function (event) {
       if (event.data.type === 'mousemove') {
         const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
