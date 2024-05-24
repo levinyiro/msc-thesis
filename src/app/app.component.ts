@@ -1,16 +1,15 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   canvas?: OffscreenCanvas;
-  @ViewChild('divContainer') divContainer!: ElementRef<HTMLDivElement>;
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
@@ -19,19 +18,15 @@ export class AppComponent {
   ngAfterViewInit() {
     this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));
 
-    this.worker.onmessage = ({ data }) => {
-      if (data.type === 'render') {
-        this.divContainer.nativeElement.innerHTML = '';
-        this.divContainer.nativeElement.appendChild(data.canvas);
-      }
-    };
+    const htmlCanvas = document.getElementById('canvas') as any;
+    htmlCanvas.width = window.innerWidth;
+    htmlCanvas.height = window.innerHeight;
 
-    this.worker.onerror = ( (error) => {
-      console.log('Error on worker', error);
-    });
+    var hasOffscreenSupport = !!htmlCanvas.transferControlToOffscreen;
+    if (hasOffscreenSupport) {
+      var offscreen = htmlCanvas.transferControlToOffscreen() as any;
 
-    if (this.canvas && this.worker) {
-      this.worker.postMessage({ type: 'canvas', canvas: this.canvas }, [this.canvas]);
+      this.worker.postMessage({ canvas: offscreen }, [offscreen]);
     }
   }
 }
