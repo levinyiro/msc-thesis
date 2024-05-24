@@ -48,10 +48,10 @@ insideWorker((event: any) => {
 
     animate();
 
-    self.onmessage = function (evt) {
-      if (evt.data.type === 'mousemove') {
-        const mouseX = (evt.data.mouseX / canvas.width) * 2 - 1;
-        const mouseY = -(evt.data.mouseY / canvas.height) * 2 + 1;
+    self.onmessage = function (event) {
+      if (event.data.type === 'mousemove') {
+        const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
+        const mouseY = -(event.data.mouseY / canvas.height) * 2 + 1;
         
         object.position.x = mouseX * 5;
         object.position.y = mouseY * 5;
