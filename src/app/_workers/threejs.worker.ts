@@ -4,22 +4,43 @@ const THREE = require('three');
 insideWorker((event: any) => {
   if (event.data.canvas) {
     const renderer = new THREE.WebGLRenderer({ canvas: event.data.canvas });
-    // renderer.setSize();
+
+    renderer.setClearColor(0xa9f8fb);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, event.data.canvas.width / event.data.canvas.height, 0.1, 1000);
     camera.position.z = 5;
 
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    const spotLight = new THREE.SpotLight(0xe7c6ff, 0.7);
+    const spotLightRadius = 8;
+    const spotLightAngle = Date.now() * 0.0005;
+    spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
+    spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
+    scene.add(spotLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    scene.add(ambientLight);
+
+    const geometry = new THREE.SphereGeometry(3, 64, 32);
+
+    var material = new THREE.MeshPhongMaterial({ color: 0xef476f });
+
+    const object = new THREE.Mesh(geometry, material);
+    scene.add(object);
+
+    const radius = 8;
+    const angle = 0;
+    camera.position.x = Math.sin(angle) * radius;
+    camera.position.z = Math.cos(angle) * radius;
+    camera.lookAt(object.position);
 
     function animate() {
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-
+      const spotLightAngle = Date.now() * 0.0005;
+      spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
+      spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
+      
       renderer.render(scene, camera);
+
       requestAnimationFrame(animate);
     }
 
