@@ -3,12 +3,14 @@ const THREE = require('three');
 
 insideWorker((event: any) => {
   if (event.data.canvas) {
-    const renderer = new THREE.WebGLRenderer({ canvas: event.data.canvas });
+    const canvas = event.data.canvas;
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas });
 
     renderer.setClearColor(0xa9f8fb);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, event.data.canvas.width / event.data.canvas.height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
     camera.position.z = 5;
 
     const spotLight = new THREE.SpotLight(0xe7c6ff, 0.7);
@@ -48,8 +50,8 @@ insideWorker((event: any) => {
 
     self.onmessage = function (evt) {
       if (evt.data.type === 'mousemove') {
-        const mouseX = (evt.data.mouseX / event.data.canvas.width) * 2 - 1;
-        const mouseY = -(evt.data.mouseY / event.data.canvas.height) * 2 + 1;
+        const mouseX = (evt.data.mouseX / canvas.width) * 2 - 1;
+        const mouseY = -(evt.data.mouseY / canvas.height) * 2 + 1;
         
         object.position.x = mouseX * 5;
         object.position.y = mouseY * 5;
