@@ -27,6 +27,16 @@ export class AppComponent implements OnInit, AfterViewInit {
       var offscreen = htmlCanvas.transferControlToOffscreen() as any;
 
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
+
+      htmlCanvas.addEventListener('mousedown', (event: any) => {
+        if (this.worker) {
+          this.worker.postMessage({
+            type: 'mousedown',
+            mouseX: event.clientX,
+            mouseY: event.clientY
+          });
+        }
+      });
     }
   }
 }
