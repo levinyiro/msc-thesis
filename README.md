@@ -106,3 +106,11 @@ After that you have to implement the following codes
 [3] Worker with ThreeJS. https://github.com/naotaro0123/three-ts-csg-practice/blob/b1b8e7ce66600caeca7281532efd5ac7db9f9757/src/Workers/OffScreenWorker.ts
 
 [4] Offscreen canvas inside webworker. https://konvajs.org/docs/sandbox/Web_Worker.html
+
+
+# S3L
+
+- [ ] https://discourse.threejs.org/t/how-to-enable-fps-counter-within-the-three-js-web-editor/33030
+- [ ] terhelés - a háttérben mennyi CPU-t eszik (webworkerben lehet nézni?)
+- [x] Föld object, ami egy ellipszis pályán mozog
+- [x] Összefoglaló a témabejelentőhöz
