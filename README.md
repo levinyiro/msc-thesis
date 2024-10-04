@@ -114,3 +114,11 @@ After that you have to implement the following codes
 - [ ] terhelés - a háttérben mennyi CPU-t eszik (webworkerben lehet nézni?)
 - [x] Föld object, ami egy ellipszis pályán mozog
 - [x] Összefoglaló a témabejelentőhöz
+- [ ] NASA API vizsgálata
+- [ ] Statikus elliptikus pálya
+- [ ] Szakdolgozat leírás módosítása
+- [ ] Más API keresése
+- [ ] Árnyék szemben a nappal
+- [ ] Textúrák módosítása
+- [ ] Vonal a pályán
+- [ ] Kapcsoló - eltűnjön a vonal
