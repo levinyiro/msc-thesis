@@ -6,7 +6,7 @@ insideWorker((event: any) => {
     const canvas = event.data.canvas;
 
     const renderer = new THREE.WebGLRenderer({ canvas: canvas });
-    renderer.setClearColor(0xa9f8fb);
+    renderer.setClearColor(0x111111);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
@@ -22,15 +22,15 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
 
-    // Nap
+    // Sun
     const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-    const sunMaterial = new THREE.MeshPhongMaterial({ color: 0xef476f });
+    const sunMaterial = new THREE.MeshPhongMaterial({ color: 0xfdb813 });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
-    // Föld
+    // Earth
     const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const earthMaterial = new THREE.MeshPhongMaterial({ color: 0x3c7ef7 });
+    const earthMaterial = new THREE.MeshPhongMaterial({ color: 0x6b93d6 });
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
     scene.add(earth);
 
