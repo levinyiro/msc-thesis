@@ -23,10 +23,11 @@ insideWorker((event: any) => {
     scene.add(ambientLight);
 
     // Sun
-    const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-    const sunMaterial = new THREE.MeshPhongMaterial({ color: 0xfdb813 });
-    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    scene.add(sun);
+    // const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
+    // const sunMaterial = new THREE.MeshPhongMaterial({ color: 0xfdb813 });
+    // const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    // scene.add(sun);
+    let sun: any;
 
     let earth: any;
     const earthOrbitRadius = 8; // Earth's orbit radius
@@ -51,6 +52,21 @@ insideWorker((event: any) => {
 
     animate();
 
+    fetch('../assets/sun-texture.jpg')
+    .then(response => response.blob())
+    .then(blob => createImageBitmap(blob))
+    .then(imageBitmap => {
+      const texture = new THREE.Texture(imageBitmap);
+      texture.needsUpdate = true;
+
+      const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
+      const sunMaterial = new THREE.MeshPhongMaterial({
+        map: texture
+      });
+      sun = new THREE.Mesh(sunGeometry, sunMaterial);
+      scene.add(sun);
+    });
+
     fetch('../assets/earth-texture.jpg')
       .then(response => response.blob())
       .then(blob => createImageBitmap(blob))
@@ -58,7 +74,6 @@ insideWorker((event: any) => {
         const texture = new THREE.Texture(imageBitmap);
         texture.needsUpdate = true;
 
-        // Earth with texture loaded in the worker
         const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
         const earthMaterial = new THREE.MeshPhongMaterial({
           map: texture
