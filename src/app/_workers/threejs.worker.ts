@@ -28,25 +28,22 @@ insideWorker((event: any) => {
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
-    // Earth
-    const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const earthMaterial = new THREE.MeshPhongMaterial({ color: 0x6b93d6 });
-    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-    scene.add(earth);
-
-    const earthOrbitRadius = 8; // A Föld pályájának sugara
-    let earthAngle = 0; // A Föld szöghelyzete
+    let earth: any;
+    const earthOrbitRadius = 8; // Earth's orbit radius
+    let earthAngle = 0; // Earth's angular position
 
     function animate() {
-      // Spotlight animáció
+      // Spotlight animation
       const spotLightAngle = Date.now() * 0.0005;
       spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
       spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
 
-      // Föld pozíció frissítése a pályán
-      earthAngle += 0.01; // A Föld körüli mozgás sebessége
-      earth.position.x = Math.sin(earthAngle) * earthOrbitRadius;
-      earth.position.z = Math.cos(earthAngle) * earthOrbitRadius;
+      // Update Earth's position on its orbit if Earth is defined
+      if (earth) {
+        earthAngle += 0.01; // Earth's orbital speed
+        earth.position.x = Math.sin(earthAngle) * earthOrbitRadius;
+        earth.position.z = Math.cos(earthAngle) * earthOrbitRadius;
+      }
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
@@ -54,11 +51,28 @@ insideWorker((event: any) => {
 
     animate();
 
+    fetch('../assets/earth-texture.jpg')
+      .then(response => response.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(imageBitmap => {
+        const texture = new THREE.Texture(imageBitmap);
+        texture.needsUpdate = true;
+
+        // Earth with texture loaded in the worker
+        const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const earthMaterial = new THREE.MeshPhongMaterial({
+          map: texture
+        });
+        earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        scene.add(earth);
+      });
+
+    // Handle mouse movement events
     self.onmessage = function (event) {
       if (event.data.type === 'mousemove') {
         const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
         const mouseY = -(event.data.mouseY / canvas.height) * 2 + 1;
-        
+
         camera.position.x = mouseX * 10;
         camera.position.y = mouseY * 10;
         camera.position.z = 15;
