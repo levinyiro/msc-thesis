@@ -33,15 +33,37 @@ insideWorker((event: any) => {
     const earthOrbitRadius = 8; // Earth's orbit radius
     let earthAngle = 0; // Earth's angular position
 
+    // Create the earth orbit path
+    const orbitCurve = new THREE.EllipseCurve(
+      0, 0,
+      earthOrbitRadius, earthOrbitRadius,
+      0, 2 * Math.PI,
+      false,
+      0
+    );
+    
+    const points = orbitCurve.getPoints(100);
+    const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const orbitPathMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+    const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
+    orbitPath.rotation.x = Math.PI / 2;
+
+    scene.add(orbitPath);
+
     function animate() {
       // Spotlight animation
       const spotLightAngle = Date.now() * 0.0005;
       spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
       spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
 
+      if (sun) {
+        sun.rotation.y -= 0.001;
+      }
+
       // Update Earth's position on its orbit if Earth is defined
       if (earth) {
-        earthAngle += 0.01; // Earth's orbital speed
+        earthAngle += 0.001; // Earth's orbital speed
+        earth.rotation.y += 0.05;
         earth.position.x = Math.sin(earthAngle) * earthOrbitRadius;
         earth.position.z = Math.cos(earthAngle) * earthOrbitRadius;
       }
