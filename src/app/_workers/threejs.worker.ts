@@ -90,7 +90,11 @@ insideWorker((event: any) => {
     .then(imageBitmap => {
       const texture = new THREE.Texture(imageBitmap);
       texture.needsUpdate = true;
-
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.x = 1;
+      texture.repeat.y = -1;
+      
       const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
       const sunMaterial = new THREE.MeshPhongMaterial({
         map: texture
@@ -105,10 +109,15 @@ insideWorker((event: any) => {
       .then(imageBitmap => {
         const texture = new THREE.Texture(imageBitmap);
         texture.needsUpdate = true;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.x = 1;
+        texture.repeat.y = -1;
 
         const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        earthGeometry.rotateY(Math.PI);
         const earthMaterial = new THREE.MeshPhongMaterial({
-          map: texture
+          map: texture,
         });
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
         scene.add(earth);
