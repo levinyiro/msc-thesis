@@ -12,29 +12,45 @@ insideWorker((event: any) => {
     const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
     camera.position.z = 15;
 
-    const spotLight = new THREE.SpotLight(0xe7c6ff, 0.7);
-    const spotLightRadius = 8;
-    const spotLightAngle = Date.now() * 0.0005;
-    spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
-    spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
-    scene.add(spotLight);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    // Sun
-    // const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-    // const sunMaterial = new THREE.MeshPhongMaterial({ color: 0xfdb813 });
-    // const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    // scene.add(sun);
     let sun: any;
-
     let earth: any;
-    const earthOrbitRadius = 8; // Earth's orbit radius
-    let earthAngle = 0; // Earth's angular position
+    let sunSpotLight: any;
+    const earthOrbitRadius = 8;
+    let earthAngle = 0;
     let showLines = true;
     let orbitPath: any = null;
 
+    fetch('../assets/sun-texture.jpg')
+      .then(response => response.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(imageBitmap => {
+        const texture = new THREE.Texture(imageBitmap);
+        texture.needsUpdate = true;
+
+        const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
+        const sunMaterial = new THREE.MeshPhongMaterial({
+          map: texture
+        });
+        sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
+
+        sunSpotLight = new THREE.SpotLight(0xe7c6ff, 10);
+        sunSpotLight.position.set(0, 0, 0);
+        sunSpotLight.angle = Math.PI / 6;
+        sunSpotLight.penumbra = 0.2;
+        sunSpotLight.decay = 2;
+        sunSpotLight.distance = 50;
+
+        scene.add(sunSpotLight);
+
+        sunSpotLight.target = new THREE.Object3D();
+        scene.add(sunSpotLight.target);
+      });
+
+    // Function to create the Earth's orbit line
     function createOrbitLine() {
       if (orbitPath) {
         scene.remove(orbitPath);
@@ -61,18 +77,14 @@ insideWorker((event: any) => {
     }
 
     function animate() {
-      // Spotlight animation
-      const spotLightAngle = Date.now() * 0.0005;
-      spotLight.position.x = Math.sin(spotLightAngle) * spotLightRadius;
-      spotLight.position.z = Math.cos(spotLightAngle) * spotLightRadius;
-
       if (sun) {
-        sun.rotation.y -= 0.001;
+        sunSpotLight.position.copy(sun.position);
+        sunSpotLight.target.position.set(earth.position.x, earth.position.y, earth.position.z);
+        sunSpotLight.target.updateMatrixWorld();
       }
 
-      // Update Earth's position on its orbit if Earth is defined
       if (earth) {
-        earthAngle += 0.001; // Earth's orbital speed
+        earthAngle += 0.001;
         earth.rotation.y += 0.05;
         earth.position.x = Math.sin(earthAngle) * earthOrbitRadius;
         earth.position.z = Math.cos(earthAngle) * earthOrbitRadius;
@@ -83,25 +95,6 @@ insideWorker((event: any) => {
     }
 
     animate();
-
-    fetch('../assets/sun-texture.jpg')
-    .then(response => response.blob())
-    .then(blob => createImageBitmap(blob))
-    .then(imageBitmap => {
-      const texture = new THREE.Texture(imageBitmap);
-      texture.needsUpdate = true;
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.x = 1;
-      texture.repeat.y = -1;
-      
-      const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-      const sunMaterial = new THREE.MeshPhongMaterial({
-        map: texture
-      });
-      sun = new THREE.Mesh(sunGeometry, sunMaterial);
-      scene.add(sun);
-    });
 
     fetch('../assets/earth-texture.jpg')
       .then(response => response.blob())
@@ -115,7 +108,6 @@ insideWorker((event: any) => {
         texture.repeat.y = -1;
 
         const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        earthGeometry.rotateY(Math.PI);
         const earthMaterial = new THREE.MeshPhongMaterial({
           map: texture,
         });
@@ -123,7 +115,6 @@ insideWorker((event: any) => {
         scene.add(earth);
       });
 
-    // Handle mouse movement events
     self.onmessage = function (event) {
       if (event.data.type === 'mousemove') {
         const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
@@ -147,6 +138,5 @@ insideWorker((event: any) => {
         }     
       }
     };
-
   }
 });
