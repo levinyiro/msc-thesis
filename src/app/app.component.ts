@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -8,6 +8,7 @@ import { Component, AfterViewInit, OnInit } from '@angular/core';
 export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   canvas?: OffscreenCanvas;
+  @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
 
   constructor() { }
 
@@ -41,5 +42,16 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       });
     }
+
+    const checkbox = document.getElementById('inputShowLine') as HTMLInputElement;
+
+    checkbox.addEventListener('change', () => {      
+      if (this.worker) {        
+        this.worker.postMessage({
+          type: 'toggleLines',
+          showLines: checkbox.checked
+        });
+      }
+    });
   }
 }

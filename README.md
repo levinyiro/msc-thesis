@@ -122,3 +122,6 @@ After that you have to implement the following codes
 - [ ] Textúrák módosítása
 - [ ] Vonal a pályán
 - [ ] Kapcsoló - eltűnjön a vonal
+
+
+https://github.com/spite/THREE.MeshLine

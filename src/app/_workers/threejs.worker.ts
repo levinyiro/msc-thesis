@@ -32,23 +32,33 @@ insideWorker((event: any) => {
     let earth: any;
     const earthOrbitRadius = 8; // Earth's orbit radius
     let earthAngle = 0; // Earth's angular position
+    let showLines = true;
+    let orbitPath: any = null;
 
-    // Create the earth orbit path
-    const orbitCurve = new THREE.EllipseCurve(
-      0, 0,
-      earthOrbitRadius, earthOrbitRadius,
-      0, 2 * Math.PI,
-      false,
-      0
-    );
-    
-    const points = orbitCurve.getPoints(100);
-    const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
-    const orbitPathMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-    const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
-    orbitPath.rotation.x = Math.PI / 2;
+    function createOrbitLine() {
+      if (orbitPath) {
+        scene.remove(orbitPath);
+      }
 
-    scene.add(orbitPath);
+      const orbitCurve = new THREE.EllipseCurve(
+        0, 0,
+        earthOrbitRadius, earthOrbitRadius,
+        0, 2 * Math.PI,
+        false,
+        0
+      );
+      
+      const points = orbitCurve.getPoints(100);
+      const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
+      const orbitPathMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+      orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
+      orbitPath.rotation.x = Math.PI / 2;
+      scene.add(orbitPath);
+    }
+
+    if (showLines) {
+      createOrbitLine();
+    }
 
     function animate() {
       // Spotlight animation
@@ -116,6 +126,18 @@ insideWorker((event: any) => {
 
         camera.lookAt(sun.position);
       }
+
+      if (event.data.type === 'toggleLines') {
+        showLines = event.data.showLines;
+        
+        if (showLines) {
+          createOrbitLine();
+        } else if (orbitPath) {
+          scene.remove(orbitPath);
+          orbitPath = null;
+        }     
+      }
     };
+
   }
 });
