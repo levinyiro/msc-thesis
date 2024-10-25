@@ -1,4 +1,5 @@
 import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { DataService } from './services/data.service';
 
 @Component({
   selector: 'app-root',
@@ -9,11 +10,20 @@ export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
+  earthData: any;
 
-  constructor() { }
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
+
+    this.dataService.getEarthData().subscribe(data => {
+      this.earthData = data;
+
+      if (this.worker) {
+        this.worker.postMessage({ type: 'earthData', earthData: data });
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -53,5 +63,9 @@ export class AppComponent implements OnInit, AfterViewInit {
         });
       }
     });
+
+    if (this.earthData) {
+      this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
+    }
   }
 }

@@ -137,6 +137,12 @@ insideWorker((event: any) => {
           orbitPath = null;
         }     
       }
+
+      if (event.data.type === 'earthData') {
+        console.log(event.data.earthData);
+        
+        // TODO: handle the informations
+      }
     };
   }
 });
