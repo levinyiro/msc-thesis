@@ -68,4 +68,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
     }
   }
+
+  fetchEarthInformations() {
+    // https://api.le-systeme-solaire.net/en/
+  }
 }

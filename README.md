@@ -116,12 +116,14 @@ After that you have to implement the following codes
 - [x] Összefoglaló a témabejelentőhöz
 - [ ] NASA API vizsgálata
 - [ ] Statikus elliptikus pálya
-- [ ] Szakdolgozat leírás módosítása
-- [ ] Más API keresése
+- [x] Szakdolgozat leírás módosítása
+- [x] Más API keresése
 - [ ] Árnyék szemben a nappal
-- [ ] Textúrák módosítása
-- [ ] Vonal a pályán
-- [ ] Kapcsoló - eltűnjön a vonal
+- [x] Textúrák módosítása
+- [x] Vonal a pályán
+- [x] Kapcsoló - eltűnjön a vonal
+
+# 2024.11.
 
 
 https://github.com/spite/THREE.MeshLine
