@@ -4,7 +4,6 @@ const THREE = require('three');
 insideWorker((event: any) => {
   if (event.data.canvas) {
     const canvas = event.data.canvas;
-
     const renderer = new THREE.WebGLRenderer({ canvas: canvas });
     renderer.setClearColor(0x111111);
 
@@ -15,13 +14,13 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any;
-    let earth: any;
-    let sunSpotLight: any;
+    let sun: any, earth: any, sunSpotLight: any, orbitPath: any = null;
     const earthOrbitRadius = 8;
     let earthAngle = 0;
     let showLines = true;
-    let orbitPath: any = null;
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let yaw = 0, pitch = 0;
 
     fetch('../assets/sun-texture.jpg')
       .then(response => response.blob())
@@ -29,11 +28,8 @@ insideWorker((event: any) => {
       .then(imageBitmap => {
         const texture = new THREE.Texture(imageBitmap);
         texture.needsUpdate = true;
-
         const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-        const sunMaterial = new THREE.MeshPhongMaterial({
-          map: texture
-        });
+        const sunMaterial = new THREE.MeshPhongMaterial({ map: texture });
         sun = new THREE.Mesh(sunGeometry, sunMaterial);
         scene.add(sun);
 
@@ -43,27 +39,16 @@ insideWorker((event: any) => {
         sunSpotLight.penumbra = 0.2;
         sunSpotLight.decay = 2;
         sunSpotLight.distance = 50;
-
         scene.add(sunSpotLight);
-
         sunSpotLight.target = new THREE.Object3D();
         scene.add(sunSpotLight.target);
       });
 
-    // Function to create the Earth's orbit line
     function createOrbitLine() {
       if (orbitPath) {
         scene.remove(orbitPath);
       }
-
-      const orbitCurve = new THREE.EllipseCurve(
-        0, 0,
-        earthOrbitRadius, earthOrbitRadius,
-        0, 2 * Math.PI,
-        false,
-        0
-      );
-      
+      const orbitCurve = new THREE.EllipseCurve(0, 0, earthOrbitRadius, earthOrbitRadius, 0, 2 * Math.PI, false, 0);
       const points = orbitCurve.getPoints(100);
       const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
@@ -106,42 +91,49 @@ insideWorker((event: any) => {
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.x = 1;
         texture.repeat.y = -1;
-
         const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        const earthMaterial = new THREE.MeshPhongMaterial({
-          map: texture,
-        });
+        const earthMaterial = new THREE.MeshPhongMaterial({ map: texture });
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
         scene.add(earth);
       });
 
     self.onmessage = function (event) {
-      if (event.data.type === 'mousemove') {
-        const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
-        const mouseY = -(event.data.mouseY / canvas.height) * 2 + 1;
-
-        camera.position.x = mouseX * 10;
-        camera.position.y = mouseY * 10;
-        camera.position.z = 15;
-
-        camera.lookAt(sun.position);
-      }
-
-      if (event.data.type === 'toggleLines') {
-        showLines = event.data.showLines;
+      switch (event.data.type) {
+        case 'mousedown':
+          isDragging = true;
+          previousMousePosition.x = event.data.mouseX;
+          previousMousePosition.y = event.data.mouseY;
+          break;
         
-        if (showLines) {
-          createOrbitLine();
-        } else if (orbitPath) {
-          scene.remove(orbitPath);
-          orbitPath = null;
-        }     
-      }
+        case 'mouseup':
+          isDragging = false;
+          break;
 
-      if (event.data.type === 'earthData') {
-        console.log(event.data.earthData);
-        
-        // TODO: handle the informations
+        case 'mousemove':
+          if (isDragging) {
+            const deltaX = event.data.mouseX - previousMousePosition.x;
+            const deltaY = event.data.mouseY - previousMousePosition.y;
+            yaw -= deltaX * 0.001;
+            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
+            camera.rotation.set(pitch, yaw, 0);
+            previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
+          }
+          break;
+
+        case 'toggleLines':
+          showLines = event.data.showLines;
+          showLines ? createOrbitLine() : scene.remove(orbitPath);
+          break;
+
+        case 'keydown':
+          const step = 0.5;
+          const direction = new THREE.Vector3();
+          camera.getWorldDirection(direction);
+          if (event.data.key === 'ArrowUp') camera.position.addScaledVector(direction, step);
+          if (event.data.key === 'ArrowDown') camera.position.addScaledVector(direction, -step);
+          if (event.data.key === 'ArrowLeft') camera.position.x -= step * Math.cos(yaw);
+          if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
+          break;
       }
     };
   }

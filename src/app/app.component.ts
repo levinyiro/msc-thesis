@@ -16,10 +16,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-
     this.dataService.getEarthData().subscribe(data => {
       this.earthData = data;
-
       if (this.worker) {
         this.worker.postMessage({ type: 'earthData', earthData: data });
       }
@@ -27,22 +25,32 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // connect to worker
     this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));
-
     const htmlCanvas = document.getElementById('canvas') as any;
     htmlCanvas.width = window.innerWidth;
     htmlCanvas.height = window.innerHeight;
 
-    var hasOffscreenSupport = !!htmlCanvas.transferControlToOffscreen;
-    if (hasOffscreenSupport) {
-      var offscreen = htmlCanvas.transferControlToOffscreen() as any;
-
-      // send canvas offscreen to worker
+    if (htmlCanvas.transferControlToOffscreen) {
+      const offscreen = htmlCanvas.transferControlToOffscreen() as any;
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
 
-      // event handling and sending to worker
-      htmlCanvas.addEventListener('mousemove', (event: any) => {
+      htmlCanvas.addEventListener('mousedown', (event: MouseEvent) => {
+        if (this.worker) {
+          this.worker.postMessage({
+            type: 'mousedown',
+            mouseX: event.clientX,
+            mouseY: event.clientY
+          });
+        }
+      });
+
+      htmlCanvas.addEventListener('mouseup', () => {
+        if (this.worker) {
+          this.worker.postMessage({ type: 'mouseup' });
+        }
+      });
+
+      htmlCanvas.addEventListener('mousemove', (event: MouseEvent) => {
         if (this.worker) {
           this.worker.postMessage({
             type: 'mousemove',
@@ -51,25 +59,26 @@ export class AppComponent implements OnInit, AfterViewInit {
           });
         }
       });
-    }
 
-    const checkbox = document.getElementById('inputShowLine') as HTMLInputElement;
+      window.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          this.worker.postMessage({ type: 'keydown', key: event.key });
+        }
+      });
 
-    checkbox.addEventListener('change', () => {      
-      if (this.worker) {        
-        this.worker.postMessage({
-          type: 'toggleLines',
-          showLines: checkbox.checked
-        });
+      const checkbox = document.getElementById('inputShowLine') as HTMLInputElement;
+      checkbox.addEventListener('change', () => {
+        if (this.worker) {
+          this.worker.postMessage({
+            type: 'toggleLines',
+            showLines: checkbox.checked
+          });
+        }
+      });
+
+      if (this.earthData) {
+        this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
       }
-    });
-
-    if (this.earthData) {
-      this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
     }
-  }
-
-  fetchEarthInformations() {
-    // https://api.le-systeme-solaire.net/en/
   }
 }
