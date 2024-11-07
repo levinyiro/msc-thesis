@@ -9,13 +9,15 @@ insideWorker((event: any) => {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
-    camera.position.z = 15;
+    camera.position.z = 100;
+    camera.position.y = 20;
+    camera.rotation.x = -0.3;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
     let sun: any, earth: any, sunSpotLight: any, orbitPath: any = null;
-    const earthOrbitRadius = 8;
+    let earthData: any = null;
     let earthAngle = 0;
     let showLines = true;
     let isDragging = false;
@@ -38,17 +40,30 @@ insideWorker((event: any) => {
         sunSpotLight.angle = Math.PI / 6;
         sunSpotLight.penumbra = 0.2;
         sunSpotLight.decay = 2;
-        sunSpotLight.distance = 50;
+        sunSpotLight.distance = 1000;
         scene.add(sunSpotLight);
         sunSpotLight.target = new THREE.Object3D();
         scene.add(sunSpotLight.target);
       });
 
     function createOrbitLine() {
+      if (!earthData) return;
+
       if (orbitPath) {
         scene.remove(orbitPath);
       }
-      const orbitCurve = new THREE.EllipseCurve(0, 0, earthOrbitRadius, earthOrbitRadius, 0, 2 * Math.PI, false, 0);
+
+      const perihelion = earthData.perihelion / 2000000;
+      const aphelion = earthData.aphelion / 2000000;
+      const eccentricity = earthData.eccentricity;
+
+      const semiMajorAxis = (perihelion + aphelion) / 2;
+      const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - Math.pow(eccentricity, 2));
+
+      const orbitCurve = new THREE.EllipseCurve(
+        0, 0, semiMajorAxis, semiMinorAxis, 0, 2 * Math.PI, false, 0
+      );
+
       const points = orbitCurve.getPoints(100);
       const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
@@ -71,8 +86,8 @@ insideWorker((event: any) => {
       if (earth) {
         earthAngle += 0.001;
         earth.rotation.y += 0.05;
-        earth.position.x = Math.sin(earthAngle) * earthOrbitRadius;
-        earth.position.z = Math.cos(earthAngle) * earthOrbitRadius;
+        earth.position.x = Math.sin(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
+        earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
       }
 
       renderer.render(scene, camera);
@@ -104,7 +119,7 @@ insideWorker((event: any) => {
           previousMousePosition.x = event.data.mouseX;
           previousMousePosition.y = event.data.mouseY;
           break;
-        
+
         case 'mouseup':
           isDragging = false;
           break;
@@ -133,6 +148,12 @@ insideWorker((event: any) => {
           if (event.data.key === 'ArrowDown') camera.position.addScaledVector(direction, -step);
           if (event.data.key === 'ArrowLeft') camera.position.x -= step * Math.cos(yaw);
           if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
+          break;
+
+        case 'earthData':
+          earthData = event.data.earthData;
+          createOrbitLine();
+          console.log('Received earthData:', earthData);
           break;
       }
     };
