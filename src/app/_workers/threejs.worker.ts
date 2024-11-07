@@ -141,7 +141,7 @@ insideWorker((event: any) => {
           break;
 
         case 'keydown':
-          const step = 0.5;
+          const step = 2;
           const direction = new THREE.Vector3();
           camera.getWorldDirection(direction);
           if (event.data.key === 'ArrowUp') camera.position.addScaledVector(direction, step);
