@@ -10,12 +10,29 @@ export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
+  mercurData: any;
+  venusData: any;
   earthData: any;
 
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
+
+    this.dataService.getMercurData().subscribe(data => {
+      this.mercurData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'mercurData', mercurData: data });
+      }
+    });
+    
+    this.dataService.getVenusData().subscribe(data => {
+      this.venusData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'venusData', venusData: data });
+      }
+    });
+
     this.dataService.getEarthData().subscribe(data => {
       this.earthData = data;
       if (this.worker) {
@@ -75,6 +92,14 @@ export class AppComponent implements OnInit, AfterViewInit {
           });
         }
       });
+
+      if (this.mercurData) {
+        this.worker.postMessage({ type: 'mercurData', mercurData: this.mercurData });
+      }
+
+      if (this.venusData) {
+        this.worker.postMessage({ type: 'venusData', venusData: this.venusData });
+      }
 
       if (this.earthData) {
         this.worker.postMessage({ type: 'earthData', earthData: this.earthData });

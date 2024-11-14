@@ -17,7 +17,7 @@ insideWorker((event: any) => {
     scene.add(ambientLight);
 
     let sun: any, earth: any, sunSpotLight: any, orbitPath: any = null;
-    let earthData: any = null;
+    let earthData: any, mercurData: any, venusData: any = null;
     let earthAngle = 0;
     let showLines = true;
     let isDragging = false;
@@ -148,6 +148,18 @@ insideWorker((event: any) => {
           if (event.data.key === 'ArrowDown') camera.position.addScaledVector(direction, -step);
           if (event.data.key === 'ArrowLeft') camera.position.x -= step * Math.cos(yaw);
           if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
+          break;
+
+        case 'mercurData':
+          mercurData = event.data.mercurData;
+          createOrbitLine();
+          console.log('Received mercurData:', mercurData);
+          break;
+          
+        case 'venusData':
+          venusData = event.data.venusData;
+          createOrbitLine();
+          console.log('Received venusData:', venusData);
           break;
 
         case 'earthData':
