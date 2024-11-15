@@ -10,7 +10,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
-  mercurData: any;
+  mercureData: any;
   venusData: any;
   earthData: any;
 
@@ -19,10 +19,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
 
-    this.dataService.getMercurData().subscribe(data => {
-      this.mercurData = data;
+    this.dataService.getMercureData().subscribe(data => {
+      this.mercureData = data;
       if (this.worker) {
-        this.worker.postMessage({ type: 'mercurData', mercurData: data });
+        this.worker.postMessage({ type: 'mercureData', mercureData: data });
       }
     });
     
@@ -93,8 +93,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       });
 
-      if (this.mercurData) {
-        this.worker.postMessage({ type: 'mercurData', mercurData: this.mercurData });
+      if (this.mercureData) {
+        this.worker.postMessage({ type: 'mercureData', mercureData: this.mercureData });
       }
 
       if (this.venusData) {

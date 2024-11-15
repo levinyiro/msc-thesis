@@ -1,3 +1,5 @@
+import { PlanetOrbitData } from "./models/objectData";
+
 const insideWorker = require("offscreen-canvas/inside-worker");
 const THREE = require('three');
 
@@ -16,13 +18,18 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any, earth: any, sunSpotLight: any, orbitPath: any = null;
-    let earthData: any, mercurData: any, venusData: any = null;
+    let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercure: any, venus: any = null;
+    let earthData: any, mercureData: any, venusData: any = null;
     let earthAngle = 0;
+    let mercureAngle = 0;
+    let venusAngle = 0;
     let showLines = true;
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     let yaw = 0, pitch = 0;
+    let earthSpeed: number;
+    let mercureSpeed: number;
+    let venusSpeed: number;
 
     fetch('../assets/sun-texture.jpg')
       .then(response => response.blob())
@@ -46,16 +53,16 @@ insideWorker((event: any) => {
         scene.add(sunSpotLight.target);
       });
 
-    function createOrbitLine() {
-      if (!earthData) return;
+    function createOrbitLine(data: PlanetOrbitData) {
+      if (!data) return;
 
       if (orbitPath) {
         scene.remove(orbitPath);
       }
 
-      const perihelion = earthData.perihelion / 2000000;
-      const aphelion = earthData.aphelion / 2000000;
-      const eccentricity = earthData.eccentricity;
+      const perihelion = data.perihelion / 2000000;
+      const aphelion = data.aphelion / 2000000;
+      const eccentricity = data.eccentricity;
 
       const semiMajorAxis = (perihelion + aphelion) / 2;
       const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - Math.pow(eccentricity, 2));
@@ -72,8 +79,22 @@ insideWorker((event: any) => {
       scene.add(orbitPath);
     }
 
+    function calculateSpeedFromVolatility(data: any, baseSpeed: number): number {
+      const eccentricityFactor = data.eccentricity || 0;
+      const massFactor = data.mass ? data.mass.massValue * Math.pow(10, data.mass.massExponent) : 1;
+
+      const normalizedMass = Math.log10(massFactor) / 30;
+      const normalizedEccentricity = eccentricityFactor;
+
+      const volatility = normalizedMass + normalizedEccentricity;
+      return baseSpeed * (0.5 + volatility * 1.5);
+    }
+
+
     if (showLines) {
-      createOrbitLine();
+      createOrbitLine(earthData);
+      createOrbitLine(venusData);
+      createOrbitLine(mercureData);
     }
 
     function animate() {
@@ -84,14 +105,28 @@ insideWorker((event: any) => {
       }
 
       if (earth) {
-        earthAngle += 0.001;
+        earthAngle += earthSpeed;
         earth.rotation.y += 0.05;
         earth.position.x = Math.sin(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
         earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
-      }
+    }
 
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
+    if (mercure) {
+        mercureAngle += mercureSpeed;
+        mercure.rotation.y += 0.05;
+        mercure.position.x = Math.sin(mercureAngle) * (mercureData ? mercureData.semimajorAxis / 2000000 : 8);
+        mercure.position.z = Math.cos(mercureAngle) * (mercureData ? mercureData.semimajorAxis / 2000000 : 8);
+    }
+
+    if (venus) {
+        venusAngle += venusSpeed;        
+        venus.rotation.y += 0.05;
+        venus.position.x = Math.sin(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
+        venus.position.z = Math.cos(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
+    }
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
     }
 
     animate();
@@ -110,6 +145,30 @@ insideWorker((event: any) => {
         const earthMaterial = new THREE.MeshPhongMaterial({ map: texture });
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
         scene.add(earth);
+      });
+
+    fetch('../assets/mercure-texture.jpg')
+      .then(response => response.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(imageBitmap => {
+        const texture = new THREE.Texture(imageBitmap);
+        texture.needsUpdate = true;
+        const mercureGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const mercureMaterial = new THREE.MeshPhongMaterial({ map: texture });
+        mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
+        scene.add(mercure);
+      });
+
+    fetch('../assets/venus-texture.jpg')
+      .then(response => response.blob())
+      .then(blob => createImageBitmap(blob))
+      .then(imageBitmap => {
+        const texture = new THREE.Texture(imageBitmap);
+        texture.needsUpdate = true;
+        const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+        const venusMaterial = new THREE.MeshPhongMaterial({ map: texture });
+        venus = new THREE.Mesh(venusGeometry, venusMaterial);
+        scene.add(venus);
       });
 
     self.onmessage = function (event) {
@@ -137,7 +196,13 @@ insideWorker((event: any) => {
 
         case 'toggleLines':
           showLines = event.data.showLines;
-          showLines ? createOrbitLine() : scene.remove(orbitPath);
+          if (showLines) {
+            createOrbitLine(earthData);
+            createOrbitLine(mercureData);
+            createOrbitLine(venusData);
+          } else {
+            scene.remove(orbitPath);
+          }
           break;
 
         case 'keydown':
@@ -150,21 +215,24 @@ insideWorker((event: any) => {
           if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
           break;
 
-        case 'mercurData':
-          mercurData = event.data.mercurData;
-          createOrbitLine();
-          console.log('Received mercurData:', mercurData);
+        case 'mercureData':
+          mercureData = event.data.mercureData as PlanetOrbitData;
+          createOrbitLine(mercureData);
+          mercureSpeed = calculateSpeedFromVolatility(mercureData, 0.001)
+          console.log('Received mercureData:', mercureData);
           break;
-          
+
         case 'venusData':
-          venusData = event.data.venusData;
-          createOrbitLine();
+          venusData = event.data.venusData as PlanetOrbitData;
+          createOrbitLine(venusData);
+          venusSpeed = calculateSpeedFromVolatility(venusData, 0.001)
           console.log('Received venusData:', venusData);
           break;
 
         case 'earthData':
-          earthData = event.data.earthData;
-          createOrbitLine();
+          earthData = event.data.earthData as PlanetOrbitData;
+          createOrbitLine(earthData);
+          earthSpeed = calculateSpeedFromVolatility(earthData, 0.001)
           console.log('Received earthData:', earthData);
           break;
       }
