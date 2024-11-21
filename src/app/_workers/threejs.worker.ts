@@ -30,35 +30,10 @@ insideWorker((event: any) => {
     let earthSpeed: number;
     let mercureSpeed: number;
     let venusSpeed: number;
+    let orbitLines: any[] = [];
 
-    fetch('../assets/sun-texture.jpg')
-      .then(response => response.blob())
-      .then(blob => createImageBitmap(blob))
-      .then(imageBitmap => {
-        const texture = new THREE.Texture(imageBitmap);
-        texture.needsUpdate = true;
-        const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-        const sunMaterial = new THREE.MeshPhongMaterial({ map: texture });
-        sun = new THREE.Mesh(sunGeometry, sunMaterial);
-        scene.add(sun);
-
-        sunSpotLight = new THREE.SpotLight(0xe7c6ff, 10);
-        sunSpotLight.position.set(0, 0, 0);
-        sunSpotLight.angle = Math.PI / 6;
-        sunSpotLight.penumbra = 0.2;
-        sunSpotLight.decay = 2;
-        sunSpotLight.distance = 1000;
-        scene.add(sunSpotLight);
-        sunSpotLight.target = new THREE.Object3D();
-        scene.add(sunSpotLight.target);
-      });
-
-    function createOrbitLine(data: PlanetOrbitData) {
-      if (!data) return;
-
-      if (orbitPath) {
-        scene.remove(orbitPath);
-      }
+    function createOrbitLine(data: PlanetOrbitData): any {
+      if (!data) return null;
 
       const perihelion = data.perihelion / 2000000;
       const aphelion = data.aphelion / 2000000;
@@ -73,10 +48,13 @@ insideWorker((event: any) => {
 
       const points = orbitCurve.getPoints(100);
       const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
-      const orbitPathMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-      orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
+      const orbitPathMaterial = new THREE.LineBasicMaterial({ color: data.color });
+      const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
       orbitPath.rotation.x = Math.PI / 2;
+
       scene.add(orbitPath);
+      orbitLines.push(orbitPath);
+      return orbitPath;
     }
 
     function calculateSpeedFromVolatility(data: any, baseSpeed: number): number {
@@ -109,66 +87,79 @@ insideWorker((event: any) => {
         earth.rotation.y += 0.05;
         earth.position.x = Math.sin(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
         earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
-    }
+      }
 
-    if (mercure) {
+      if (mercure) {
         mercureAngle += mercureSpeed;
         mercure.rotation.y += 0.05;
         mercure.position.x = Math.sin(mercureAngle) * (mercureData ? mercureData.semimajorAxis / 2000000 : 8);
         mercure.position.z = Math.cos(mercureAngle) * (mercureData ? mercureData.semimajorAxis / 2000000 : 8);
-    }
+      }
 
-    if (venus) {
-        venusAngle += venusSpeed;        
+      if (venus) {
+        venusAngle += venusSpeed;
         venus.rotation.y += 0.05;
         venus.position.x = Math.sin(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
         venus.position.z = Math.cos(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
+      }
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
     }
 
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-    }
+    // Replace individual fetch calls with a single Promise.all
+    Promise.all([
+      fetch('../assets/sun-texture.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/mercure-texture.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/venus-texture.jpg').then(response => response.blob()).then(createImageBitmap),
+    ])
+      .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap]) => {
+        const sunTexture = new THREE.Texture(sunBitmap);
+        sunTexture.needsUpdate = true;
+        const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
+        const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture });
+        sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
 
-    animate();
+        sunSpotLight = new THREE.SpotLight(0xe7c6ff, 10);
+        sunSpotLight.position.set(0, 0, 0);
+        sunSpotLight.angle = Math.PI / 6;
+        sunSpotLight.penumbra = 0.2;
+        sunSpotLight.decay = 2;
+        sunSpotLight.distance = 1000;
+        scene.add(sunSpotLight);
+        sunSpotLight.target = new THREE.Object3D();
+        scene.add(sunSpotLight.target);
 
-    fetch('../assets/earth-texture.jpg')
-      .then(response => response.blob())
-      .then(blob => createImageBitmap(blob))
-      .then(imageBitmap => {
-        const texture = new THREE.Texture(imageBitmap);
-        texture.needsUpdate = true;
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.x = 1;
-        texture.repeat.y = -1;
+        const earthTexture = new THREE.Texture(earthBitmap);
+        earthTexture.needsUpdate = true;
+        earthTexture.wrapS = THREE.RepeatWrapping;
+        earthTexture.wrapT = THREE.RepeatWrapping;
+        earthTexture.repeat.set(1, -1);
         const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        const earthMaterial = new THREE.MeshPhongMaterial({ map: texture });
+        const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
         scene.add(earth);
-      });
 
-    fetch('../assets/mercure-texture.jpg')
-      .then(response => response.blob())
-      .then(blob => createImageBitmap(blob))
-      .then(imageBitmap => {
-        const texture = new THREE.Texture(imageBitmap);
-        texture.needsUpdate = true;
+        const mercureTexture = new THREE.Texture(mercureBitmap);
+        mercureTexture.needsUpdate = true;
         const mercureGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const mercureMaterial = new THREE.MeshPhongMaterial({ map: texture });
+        const mercureMaterial = new THREE.MeshPhongMaterial({ map: mercureTexture });
         mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
         scene.add(mercure);
-      });
 
-    fetch('../assets/venus-texture.jpg')
-      .then(response => response.blob())
-      .then(blob => createImageBitmap(blob))
-      .then(imageBitmap => {
-        const texture = new THREE.Texture(imageBitmap);
-        texture.needsUpdate = true;
+        const venusTexture = new THREE.Texture(venusBitmap);
+        venusTexture.needsUpdate = true;
         const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
-        const venusMaterial = new THREE.MeshPhongMaterial({ map: texture });
+        const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
         venus = new THREE.Mesh(venusGeometry, venusMaterial);
         scene.add(venus);
+
+        animate();
+      })
+      .catch(error => {
+        console.error('Error loading textures:', error);
       });
 
     self.onmessage = function (event) {
@@ -196,12 +187,16 @@ insideWorker((event: any) => {
 
         case 'toggleLines':
           showLines = event.data.showLines;
+
+          // Remove all existing orbit lines from the scene
+          orbitLines.forEach((line) => scene.remove(line));
+          orbitLines = []; // Clear the list
+
+          // Recreate orbit lines if toggling on
           if (showLines) {
-            createOrbitLine(earthData);
-            createOrbitLine(mercureData);
-            createOrbitLine(venusData);
-          } else {
-            scene.remove(orbitPath);
+            if (earthData) createOrbitLine(earthData);
+            if (venusData) createOrbitLine(venusData);
+            if (mercureData) createOrbitLine(mercureData);
           }
           break;
 
@@ -217,22 +212,28 @@ insideWorker((event: any) => {
 
         case 'mercureData':
           mercureData = event.data.mercureData as PlanetOrbitData;
+          mercureData.color = 0xe7e8ec;
+          if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(mercureData);
-          mercureSpeed = calculateSpeedFromVolatility(mercureData, 0.001)
+          mercureSpeed = calculateSpeedFromVolatility(mercureData, 0.001);
           console.log('Received mercureData:', mercureData);
           break;
 
         case 'venusData':
           venusData = event.data.venusData as PlanetOrbitData;
+          venusData.color = 0xeecb8b;
+          if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(venusData);
-          venusSpeed = calculateSpeedFromVolatility(venusData, 0.001)
+          venusSpeed = calculateSpeedFromVolatility(venusData, 0.001);
           console.log('Received venusData:', venusData);
           break;
 
         case 'earthData':
           earthData = event.data.earthData as PlanetOrbitData;
+          earthData.color = 0x6b93d6;
+          if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
-          earthSpeed = calculateSpeedFromVolatility(earthData, 0.001)
+          earthSpeed = calculateSpeedFromVolatility(earthData, 0.001);
           console.log('Received earthData:', earthData);
           break;
       }
