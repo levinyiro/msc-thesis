@@ -107,7 +107,6 @@ insideWorker((event: any) => {
       requestAnimationFrame(animate);
     }
 
-    // Replace individual fetch calls with a single Promise.all
     Promise.all([
       fetch('../assets/sun-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
@@ -188,11 +187,9 @@ insideWorker((event: any) => {
         case 'toggleLines':
           showLines = event.data.showLines;
 
-          // Remove all existing orbit lines from the scene
           orbitLines.forEach((line) => scene.remove(line));
-          orbitLines = []; // Clear the list
+          orbitLines = [];
 
-          // Recreate orbit lines if toggling on
           if (showLines) {
             if (earthData) createOrbitLine(earthData);
             if (venusData) createOrbitLine(venusData);
