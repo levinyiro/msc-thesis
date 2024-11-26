@@ -112,7 +112,7 @@ insideWorker((event: any) => {
       fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/mercure-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/venus-texture.jpg').then(response => response.blob()).then(createImageBitmap),
-    ])
+    ]) // TODO: képbetöltési hiba - lokálison van, canvas image betöltés - megoldás: await a képbetöltésre
       .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap]) => {
         const sunTexture = new THREE.Texture(sunBitmap);
         sunTexture.needsUpdate = true;
