@@ -107,13 +107,16 @@ insideWorker((event: any) => {
       requestAnimationFrame(animate);
     }
 
+    const loader = new THREE.CubeTextureLoader();
+
     Promise.all([
       fetch('../assets/sun-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/mercure-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/venus-texture.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/universe-bg.jpg').then(response => response.blob()).then(createImageBitmap),
     ]) // TODO: képbetöltési hiba - lokálison van, canvas image betöltés - megoldás: await a képbetöltésre
-      .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap]) => {
+      .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap, backgroundBitmap]) => {
         const sunTexture = new THREE.Texture(sunBitmap);
         sunTexture.needsUpdate = true;
         const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
@@ -130,6 +133,17 @@ insideWorker((event: any) => {
         scene.add(sunSpotLight);
         sunSpotLight.target = new THREE.Object3D();
         scene.add(sunSpotLight.target);
+
+        const backgroundGeometry = new THREE.SphereGeometry(500, 32, 32);
+        const backgroundTexture = new THREE.Texture(backgroundBitmap);
+        backgroundTexture.needsUpdate = true;
+        
+        const backgroundMaterial = new THREE.MeshBasicMaterial({
+          map: backgroundTexture,
+          side: THREE.BackSide,
+        });
+        const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        scene.add(backgroundSphere);
 
         const earthTexture = new THREE.Texture(earthBitmap);
         earthTexture.needsUpdate = true;
