@@ -68,6 +68,9 @@ insideWorker((event: any) => {
       return baseSpeed * (0.5 + volatility * 1.5);
     }
 
+    function getAxialTilt(degree: number) {
+      return (degree || 0) * (Math.PI / 180);
+    }
 
     if (showLines) {
       createOrbitLine(earthData);
@@ -124,7 +127,7 @@ insideWorker((event: any) => {
         sun = new THREE.Mesh(sunGeometry, sunMaterial);
         scene.add(sun);
 
-        sunSpotLight = new THREE.SpotLight(0xe7c6ff, 10);
+        sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
         sunSpotLight.position.set(0, 0, 0);
         sunSpotLight.angle = Math.PI / 6;
         sunSpotLight.penumbra = 0.2;
@@ -153,6 +156,7 @@ insideWorker((event: any) => {
         const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
         const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
+        earth.rotation.z = getAxialTilt(earthData?.axialTilt);
         scene.add(earth);
 
         const mercureTexture = new THREE.Texture(mercureBitmap);
@@ -160,6 +164,7 @@ insideWorker((event: any) => {
         const mercureGeometry = new THREE.SphereGeometry(0.3, 32, 32);
         const mercureMaterial = new THREE.MeshPhongMaterial({ map: mercureTexture });
         mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
+        mercure.rotation.z = getAxialTilt(mercureData?.axialTilt);
         scene.add(mercure);
 
         const venusTexture = new THREE.Texture(venusBitmap);
@@ -167,6 +172,7 @@ insideWorker((event: any) => {
         const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
         const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
         venus = new THREE.Mesh(venusGeometry, venusMaterial);
+        venus.rotation.z = getAxialTilt(venusData?.axialTilt);
         scene.add(venus);
 
         animate();
@@ -241,7 +247,7 @@ insideWorker((event: any) => {
 
         case 'earthData':
           earthData = event.data.earthData as PlanetOrbitData;
-          earthData.color = 0x6b93d6;
+          earthData.color = 0x6b93d6;          
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
           earthSpeed = calculateSpeedFromVolatility(earthData, 0.001);
