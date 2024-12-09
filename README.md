@@ -127,3 +127,7 @@ After that you have to implement the following codes
 
 
 https://github.com/spite/THREE.MeshLine
+
+
+háttér gömb felbontásának beállítása
+bolygók textúrájára is hatással lehet

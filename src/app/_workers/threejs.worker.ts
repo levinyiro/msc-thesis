@@ -30,7 +30,13 @@ insideWorker((event: any) => {
     let earthSpeed: number;
     let mercureSpeed: number;
     let venusSpeed: number;
+    let moonSpeed: number;
     let orbitLines: any[] = [];
+    let moon: any;
+    let moonAngle = 0;
+    const moonDistance = 0.7;
+
+    const ANIMATION_SPEED = 0.0001;
 
     function createOrbitLine(data: PlanetOrbitData): any {
       if (!data) return null;
@@ -106,6 +112,12 @@ insideWorker((event: any) => {
         venus.position.z = Math.cos(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
       }
 
+      if (moon && earth) {
+        moonAngle += moonSpeed;
+        moon.position.x = earth.position.x + Math.sin(moonAngle) * moonDistance;
+        moon.position.z = earth.position.z + Math.cos(moonAngle) * moonDistance;
+      }
+
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
@@ -117,9 +129,10 @@ insideWorker((event: any) => {
       fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/mercure-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/venus-texture.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/moon-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/universe-bg.jpg').then(response => response.blob()).then(createImageBitmap),
     ]) // TODO: képbetöltési hiba - lokálison van, canvas image betöltés - megoldás: await a képbetöltésre
-      .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap, backgroundBitmap]) => {
+      .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap, moonBitmap, backgroundBitmap]) => {
         const sunTexture = new THREE.Texture(sunBitmap);
         sunTexture.needsUpdate = true;
         const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
@@ -158,6 +171,19 @@ insideWorker((event: any) => {
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
         earth.rotation.z = getAxialTilt(earthData?.axialTilt);
         scene.add(earth);
+
+        const moonTexture = new THREE.Texture(moonBitmap);
+        moonTexture.needsUpdate = true;
+        moonTexture.wrapS = THREE.RepeatWrapping;
+        moonTexture.wrapT = THREE.RepeatWrapping;
+        moonTexture.repeat.set(1, -1);
+        const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+        const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
+        moon = new THREE.Mesh(moonGeometry, moonMaterial);
+
+        moon.position.x = earth.position.x + moonDistance;
+        moon.position.z = earth.position.z;
+        scene.add(moon);
 
         const mercureTexture = new THREE.Texture(mercureBitmap);
         mercureTexture.needsUpdate = true;
@@ -232,7 +258,7 @@ insideWorker((event: any) => {
           mercureData.color = 0xe7e8ec;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(mercureData);
-          mercureSpeed = calculateSpeedFromVolatility(mercureData, 0.001);
+          mercureSpeed = calculateSpeedFromVolatility(mercureData, ANIMATION_SPEED);
           console.log('Received mercureData:', mercureData);
           break;
 
@@ -241,7 +267,7 @@ insideWorker((event: any) => {
           venusData.color = 0xeecb8b;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(venusData);
-          venusSpeed = calculateSpeedFromVolatility(venusData, 0.001);
+          venusSpeed = calculateSpeedFromVolatility(venusData, ANIMATION_SPEED);
           console.log('Received venusData:', venusData);
           break;
 
@@ -250,7 +276,8 @@ insideWorker((event: any) => {
           earthData.color = 0x6b93d6;          
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
-          earthSpeed = calculateSpeedFromVolatility(earthData, 0.001);
+          earthSpeed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
+          moonSpeed = 0.01;
           console.log('Received earthData:', earthData);
           break;
       }
