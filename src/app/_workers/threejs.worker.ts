@@ -41,18 +41,16 @@ insideWorker((event: any) => {
     const ANIMATION_SPEED = 0.0001;
 
     function addStars(count: number) {
-      const starGeometry = new THREE.SphereGeometry(0.3, 8, 8); // Small spheres
+      const starGeometry = new THREE.SphereGeometry(0.3, 8, 8);
       const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const sphereRadius = 500; // Radius of the large sphere
+      const sphereRadius = 500;
     
       for (let i = 0; i < count; i++) {
         const star = new THREE.Mesh(starGeometry, starMaterial);
     
-        // Random spherical coordinates
-        const theta = Math.random() * 2 * Math.PI; // Angle around the equator
-        const phi = Math.acos(2 * Math.random() - 1); // Angle from the pole
+        const theta = Math.random() * 2 * Math.PI;
+        const phi = Math.acos(2 * Math.random() - 1);
     
-        // Convert spherical coordinates to Cartesian coordinates
         star.position.x = sphereRadius * Math.sin(phi) * Math.cos(theta);
         star.position.y = sphereRadius * Math.sin(phi) * Math.sin(theta);
         star.position.z = sphereRadius * Math.cos(phi);
