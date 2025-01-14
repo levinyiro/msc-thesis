@@ -8,6 +8,8 @@ insideWorker((event: any) => {
     const canvas = event.data.canvas;
     const renderer = new THREE.WebGLRenderer({ canvas: canvas });
     renderer.setClearColor(0x111111);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
@@ -34,10 +36,31 @@ insideWorker((event: any) => {
     let orbitLines: any[] = [];
     let moon: any;
     let moonAngle = 0;
-    const moonDistance = 0.7;
+    const moonDistance = 2;
 
     const ANIMATION_SPEED = 0.0001;
 
+    function addStars(count: number) {
+      const starGeometry = new THREE.SphereGeometry(0.3, 8, 8); // Small spheres
+      const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const sphereRadius = 500; // Radius of the large sphere
+    
+      for (let i = 0; i < count; i++) {
+        const star = new THREE.Mesh(starGeometry, starMaterial);
+    
+        // Random spherical coordinates
+        const theta = Math.random() * 2 * Math.PI; // Angle around the equator
+        const phi = Math.acos(2 * Math.random() - 1); // Angle from the pole
+    
+        // Convert spherical coordinates to Cartesian coordinates
+        star.position.x = sphereRadius * Math.sin(phi) * Math.cos(theta);
+        star.position.y = sphereRadius * Math.sin(phi) * Math.sin(theta);
+        star.position.z = sphereRadius * Math.cos(phi);
+    
+        scene.add(star);
+      }
+    }
+    
     function createOrbitLine(data: PlanetOrbitData): any {
       if (!data) return null;
 
@@ -122,8 +145,6 @@ insideWorker((event: any) => {
       requestAnimationFrame(animate);
     }
 
-    const loader = new THREE.CubeTextureLoader();
-
     Promise.all([
       fetch('../assets/sun-texture.jpg').then(response => response.blob()).then(createImageBitmap),
       fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
@@ -133,14 +154,16 @@ insideWorker((event: any) => {
       fetch('../assets/universe-bg.jpg').then(response => response.blob()).then(createImageBitmap),
     ]) // TODO: képbetöltési hiba - lokálison van, canvas image betöltés - megoldás: await a képbetöltésre
       .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap, moonBitmap, backgroundBitmap]) => {
-        const sunTexture = new THREE.Texture(sunBitmap);
-        sunTexture.needsUpdate = true;
-        const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-        const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture });
-        sun = new THREE.Mesh(sunGeometry, sunMaterial);
-        scene.add(sun);
-
         sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
+        sunSpotLight.castShadow = true;
+
+        sunSpotLight.shadow.mapSize.width = 2056;
+        sunSpotLight.shadow.mapSize.height = 2056;
+        sunSpotLight.shadow.camera.near = 0.5;
+        sunSpotLight.shadow.camera.far = 1000;
+        sunSpotLight.shadow.penumbra = 0.5;
+        sunSpotLight.shadow.focus = 1;
+
         sunSpotLight.position.set(0, 0, 0);
         sunSpotLight.angle = Math.PI / 6;
         sunSpotLight.penumbra = 0.2;
@@ -150,16 +173,36 @@ insideWorker((event: any) => {
         sunSpotLight.target = new THREE.Object3D();
         scene.add(sunSpotLight.target);
 
-        const backgroundGeometry = new THREE.SphereGeometry(500, 32, 32);
-        const backgroundTexture = new THREE.Texture(backgroundBitmap);
-        backgroundTexture.needsUpdate = true;
+        const helper = new THREE.CameraHelper( sunSpotLight.shadow.camera );
+        scene.add( helper );
+
+        const sunTexture = new THREE.Texture(sunBitmap);
+        sunTexture.needsUpdate = true;
+        const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
+        const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture });
+        sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        sun.receiveShadow = false;
+        scene.add(sun);
+
+        // const backgroundGeometry = new THREE.SphereGeometry(500, 512, 512);
+
+        // const backgroundTexture = new THREE.Texture(backgroundBitmap);
+        // backgroundTexture.needsUpdate = true;
         
-        const backgroundMaterial = new THREE.MeshBasicMaterial({
-          map: backgroundTexture,
-          side: THREE.BackSide,
-        });
-        const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-        scene.add(backgroundSphere);
+        // backgroundTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        // backgroundTexture.magFilter = THREE.LinearFilter;
+        
+        // backgroundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        
+        // const backgroundMaterial = new THREE.MeshBasicMaterial({
+        //   map: backgroundTexture,
+        //   side: THREE.BackSide,
+        // });
+        
+        // const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        // scene.add(backgroundSphere);
+
+        addStars(1000);
 
         const earthTexture = new THREE.Texture(earthBitmap);
         earthTexture.needsUpdate = true;
@@ -170,6 +213,8 @@ insideWorker((event: any) => {
         const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
         earth = new THREE.Mesh(earthGeometry, earthMaterial);
         earth.rotation.z = getAxialTilt(earthData?.axialTilt);
+        earth.castShadow = true;
+        earth.receiveShadow = true;
         scene.add(earth);
 
         const moonTexture = new THREE.Texture(moonBitmap);
@@ -180,9 +225,11 @@ insideWorker((event: any) => {
         const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
         const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
         moon = new THREE.Mesh(moonGeometry, moonMaterial);
-
+        
         moon.position.x = earth.position.x + moonDistance;
         moon.position.z = earth.position.z;
+        moon.castShadow = true;
+        moon.receiveShadow = true;
         scene.add(moon);
 
         const mercureTexture = new THREE.Texture(mercureBitmap);
@@ -277,7 +324,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
           earthSpeed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
-          moonSpeed = 0.01;
+          moonSpeed = 0.005;
           console.log('Received earthData:', earthData);
           break;
       }
