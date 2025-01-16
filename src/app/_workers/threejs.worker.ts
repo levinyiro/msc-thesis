@@ -171,8 +171,8 @@ insideWorker((event: any) => {
         sunSpotLight.target = new THREE.Object3D();
         scene.add(sunSpotLight.target);
 
-        const helper = new THREE.CameraHelper( sunSpotLight.shadow.camera );
-        scene.add( helper );
+        // const helper = new THREE.CameraHelper( sunSpotLight.shadow.camera );
+        // scene.add( helper );
 
         const sunTexture = new THREE.Texture(sunBitmap);
         sunTexture.needsUpdate = true;

@@ -131,3 +131,10 @@ https://github.com/spite/THREE.MeshLine
 
 háttér gömb felbontásának beállítása
 bolygók textúrájára is hatással lehet
+    le fogja skálázni a 8k-s képet is
+    filter beállítása, amikor a texturát beállítottuk
+    nem gömbre feszítették ki - valami más
+    sokkal világosabb teszt közben, textura betöltésénél és beállításánál milyen extra filter kell, ami sötétítheti tovább a textúrát
+
+https://threejs.org/docs/#api/en/lights/shadows/SpotLightShadow
+https://jsfiddle.net/zoxkhjep/3/
