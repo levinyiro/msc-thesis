@@ -259,18 +259,27 @@ insideWorker((event: any) => {
           previousMousePosition.x = event.data.mouseX;
           previousMousePosition.y = event.data.mouseY;
           break;
-
+    
         case 'mouseup':
           isDragging = false;
           break;
-
+    
         case 'mousemove':
           if (isDragging) {
             const deltaX = event.data.mouseX - previousMousePosition.x;
             const deltaY = event.data.mouseY - previousMousePosition.y;
+            
             yaw -= deltaX * 0.001;
             pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
-            camera.rotation.set(pitch, yaw, 0);
+    
+            const radius = camera.position.distanceTo(sun.position);
+            const x = radius * Math.cos(pitch) * Math.sin(yaw);
+            const y = radius * Math.sin(pitch);
+            const z = radius * Math.cos(pitch) * Math.cos(yaw);
+    
+            camera.position.set(sun.position.x + x, sun.position.y + y, sun.position.z + z);
+            camera.lookAt(sun.position);
+    
             previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
           }
           break;
