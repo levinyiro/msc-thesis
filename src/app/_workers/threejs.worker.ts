@@ -73,7 +73,7 @@ insideWorker((event: any) => {
         0, 0, semiMajorAxis, semiMinorAxis, 0, 2 * Math.PI, false, 0
       );
 
-      const points = orbitCurve.getPoints(100);
+      const points = orbitCurve.getPoints(100000);
       const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: data.color });
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
@@ -171,13 +171,14 @@ insideWorker((event: any) => {
         sunSpotLight.target = new THREE.Object3D();
         scene.add(sunSpotLight.target);
 
-        // const helper = new THREE.CameraHelper( sunSpotLight.shadow.camera );
-        // scene.add( helper );
-
         const sunTexture = new THREE.Texture(sunBitmap);
         sunTexture.needsUpdate = true;
         const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-        const sunMaterial = new THREE.MeshPhongMaterial({ map: sunTexture });
+        const sunMaterial = new THREE.MeshPhongMaterial({
+          map: sunTexture,
+          emissive: 0x44fb8500,
+          emissiveIntensity: 1.5,
+        });
         sun = new THREE.Mesh(sunGeometry, sunMaterial);
         sun.receiveShadow = false;
         scene.add(sun);
@@ -269,7 +270,7 @@ insideWorker((event: any) => {
             const deltaX = event.data.mouseX - previousMousePosition.x;
             const deltaY = event.data.mouseY - previousMousePosition.y;
             
-            yaw -= deltaX * 0.001;
+            yaw -= deltaX * 0.001;            
             pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
     
             const radius = camera.position.distanceTo(sun.position);
@@ -303,8 +304,8 @@ insideWorker((event: any) => {
           camera.getWorldDirection(direction);
           if (event.data.key === 'ArrowUp') camera.position.addScaledVector(direction, step);
           if (event.data.key === 'ArrowDown') camera.position.addScaledVector(direction, -step);
-          if (event.data.key === 'ArrowLeft') camera.position.x -= step * Math.cos(yaw);
-          if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
+          // if (event.data.key === 'ArrowLeft') camera.position.x -= step * Math.cos(yaw);
+          // if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
           break;
 
         case 'mercureData':
