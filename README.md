@@ -138,3 +138,9 @@ bolygók textúrájára is hatással lehet
 
 https://threejs.org/docs/#api/en/lights/shadows/SpotLightShadow
 https://jsfiddle.net/zoxkhjep/3/
+
+scrolling miért nem jó - wheel helyette
+
+
+smooth:
+https://threejs.org/docs/#api/en/renderers/WebGLRenderer.antialias

@@ -104,6 +104,26 @@ export class AppComponent implements OnInit, AfterViewInit {
       if (this.earthData) {
         this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
       }
+
+      this.worker.onmessage = (event) => {
+        if (event.data.type === 'fps') {
+          const fpsCounter = document.getElementById('fpsCounter');
+          if (fpsCounter) {
+            fpsCounter.innerText = `FPS: ${event.data.fps}`;
+          }
+        }
+      };
+    
+      const fpsElement = document.createElement('div');
+      fpsElement.id = 'fpsCounter';
+      fpsElement.style.position = 'absolute';
+      fpsElement.style.top = '10px';
+      fpsElement.style.right = '10px';
+      fpsElement.style.color = 'white';
+      fpsElement.style.background = 'rgba(0, 0, 0, 0.5)';
+      fpsElement.style.padding = '5px';
+      fpsElement.style.borderRadius = '5px';
+      document.body.appendChild(fpsElement);
     }
   }
 }

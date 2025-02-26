@@ -38,6 +38,12 @@ insideWorker((event: any) => {
     let moonAngle = 0;
     const moonDistance = 2;
 
+    // fps counting
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+    let lastFpsUpdate = performance.now();
+    let fps = 0;
+
     const ANIMATION_SPEED = 0.0001;
 
     function addStars(count: number) {
@@ -137,6 +143,17 @@ insideWorker((event: any) => {
         moonAngle += moonSpeed;
         moon.position.x = earth.position.x + Math.sin(moonAngle) * moonDistance;
         moon.position.z = earth.position.z + Math.cos(moonAngle) * moonDistance;
+      }
+
+      // fps counting
+      const now = performance.now();
+      frameCount++;
+    
+      if (now - lastFpsUpdate >= 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFpsUpdate = now;
+        postMessage({ type: 'fps', fps: fps });
       }
 
       renderer.render(scene, camera);
