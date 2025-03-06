@@ -20,11 +20,18 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercure: any, venus: any = null;
-    let earthData: any, mercureData: any, venusData: any = null;
+    let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercure: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
+    let earthData: any, mercureData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
+    
     let earthAngle = 0;
     let mercureAngle = 0;
     let venusAngle = 0;
+    let marsAngle = 0;
+    let jupiterAngle = 0;
+    let saturnAngle = 0;
+    let uranusAngle = 0;
+    let neptuneAngle = 0;
+
     let showLines = true;
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
@@ -33,13 +40,18 @@ insideWorker((event: any) => {
     let mercureSpeed: number;
     let venusSpeed: number;
     let moonSpeed: number;
+    let marsSpeed: number;
+    let jupiterSpeed: number;
+    let saturnSpeed: number;
+    let uranusSpeed: number;
+    let neptuneSpeed: number;
     let orbitLines: any[] = [];
     let moon: any;
     let moonAngle = 0;
     const moonDistance = 2;
+    const distanceDivider = 5000000;
 
     // fps counting
-    let lastFrameTime = performance.now();
     let frameCount = 0;
     let lastFpsUpdate = performance.now();
     let fps = 0;
@@ -68,8 +80,8 @@ insideWorker((event: any) => {
     function createOrbitLine(data: PlanetOrbitData): any {
       if (!data) return null;
 
-      const perihelion = data.perihelion / 2000000;
-      const aphelion = data.aphelion / 2000000;
+      const perihelion = data.perihelion / distanceDivider;
+      const aphelion = data.aphelion / distanceDivider;
       const eccentricity = data.eccentricity;
 
       const semiMajorAxis = (perihelion + aphelion) / 2;
@@ -109,6 +121,11 @@ insideWorker((event: any) => {
       createOrbitLine(earthData);
       createOrbitLine(venusData);
       createOrbitLine(mercureData);
+      createOrbitLine(marsData);
+      createOrbitLine(jupiterData);
+      createOrbitLine(saturnData);
+      createOrbitLine(uranusData);
+      createOrbitLine(neptuneData);
     }
 
     function animate() {
@@ -121,28 +138,63 @@ insideWorker((event: any) => {
       if (earth) {
         earthAngle += earthSpeed;
         earth.rotation.y += 0.05;
-        earth.position.x = Math.sin(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
-        earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / 2000000 : 8);
+        earth.position.x = Math.sin(earthAngle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
+        earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
       }
 
       if (mercure) {
         mercureAngle += mercureSpeed;
         mercure.rotation.y += 0.05;
-        mercure.position.x = Math.sin(mercureAngle) * (mercureData ? mercureData.semimajorAxis / 2000000 : 8);
-        mercure.position.z = Math.cos(mercureAngle) * (mercureData ? mercureData.semimajorAxis / 2000000 : 8);
+        mercure.position.x = Math.sin(mercureAngle) * (mercureData ? mercureData.semimajorAxis / distanceDivider : 8);
+        mercure.position.z = Math.cos(mercureAngle) * (mercureData ? mercureData.semimajorAxis / distanceDivider : 8);
       }
 
       if (venus) {
         venusAngle += venusSpeed;
         venus.rotation.y += 0.05;
-        venus.position.x = Math.sin(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
-        venus.position.z = Math.cos(venusAngle) * (venusData ? venusData.semimajorAxis / 2000000 : 8);
+        venus.position.x = Math.sin(venusAngle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
+        venus.position.z = Math.cos(venusAngle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
       }
 
       if (moon && earth) {
         moonAngle += moonSpeed;
         moon.position.x = earth.position.x + Math.sin(moonAngle) * moonDistance;
         moon.position.z = earth.position.z + Math.cos(moonAngle) * moonDistance;
+      }
+
+      if (mars) {
+        marsAngle += marsSpeed;
+        mars.rotation.y += 0.05;
+        mars.position.x = Math.sin(marsAngle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
+        mars.position.z = Math.cos(marsAngle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
+      }
+
+      if (jupiter) {
+        jupiterAngle += jupiterSpeed;
+        jupiter.rotation.y += 0.05;
+        jupiter.position.x = Math.sin(jupiterAngle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
+        jupiter.position.z = Math.cos(jupiterAngle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
+      }
+
+      if (saturn) {
+        saturnAngle += saturnSpeed;
+        saturn.rotation.y += 0.05;
+        saturn.position.x = Math.sin(saturnAngle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
+        saturn.position.z = Math.cos(saturnAngle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
+      }
+
+      if (uranus) {
+        uranusAngle += uranusSpeed;
+        uranus.rotation.y += 0.05;
+        uranus.position.x = Math.sin(uranusAngle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
+        uranus.position.z = Math.cos(uranusAngle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
+      }
+
+      if (neptune) {
+        neptuneAngle += neptuneSpeed;
+        neptune.rotation.y += 0.05;
+        neptune.position.x = Math.sin(neptuneAngle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
+        neptune.position.z = Math.cos(neptuneAngle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
       }
 
       // fps counting
@@ -161,14 +213,28 @@ insideWorker((event: any) => {
     }
 
     Promise.all([
-      fetch('../assets/sun-texture.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/earth-texture.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/mercure-texture.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/venus-texture.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/moon-texture.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/universe-bg.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/sun.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/earth.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/mercure.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/venus.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/mars.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/jupiter.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/saturn.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/uranus.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/neptune.jpg').then(response => response.blob()).then(createImageBitmap),
+      fetch('../assets/textures/moon.jpg').then(response => response.blob()).then(createImageBitmap),
     ]) // TODO: képbetöltési hiba - lokálison van, canvas image betöltés - megoldás: await a képbetöltésre
-      .then(([sunBitmap, earthBitmap, mercureBitmap, venusBitmap, moonBitmap, backgroundBitmap]) => {
+      .then(([
+        sunBitmap,
+        earthBitmap,
+        mercureBitmap,
+        venusBitmap,
+        marsBitmap,
+        jupiterBitmap,
+        saturnBitmap,
+        uranusBitmap,
+        neptuneBitmap,
+        moonBitmap]) => {
         sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
         sunSpotLight.castShadow = true;
 
@@ -264,6 +330,46 @@ insideWorker((event: any) => {
         venus.rotation.z = getAxialTilt(venusData?.axialTilt);
         scene.add(venus);
 
+        const marsTexture = new THREE.Texture(marsBitmap);
+        marsTexture.needsUpdate = true;
+        const marsGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
+        mars = new THREE.Mesh(marsGeometry, marsMaterial);
+        mars.rotation.z = getAxialTilt(marsData?.axialTilt);
+        scene.add(mars);
+
+        const jupiterTexture = new THREE.Texture(jupiterBitmap);
+        jupiterTexture.needsUpdate = true;
+        const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
+        jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
+        jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
+        scene.add(jupiter);
+
+        const saturnTexture = new THREE.Texture(saturnBitmap);
+        saturnTexture.needsUpdate = true;
+        const saturnGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
+        saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
+        saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
+        scene.add(saturn);
+
+        const uranusTexture = new THREE.Texture(uranusBitmap);
+        uranusTexture.needsUpdate = true;
+        const uranusGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
+        uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
+        uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
+        scene.add(uranus);
+
+        const neptuneTexture = new THREE.Texture(neptuneBitmap);
+        neptuneTexture.needsUpdate = true;
+        const neptuneGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
+        neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
+        neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
+        scene.add(neptune);
+
         animate();
       })
       .catch(error => {
@@ -312,6 +418,11 @@ insideWorker((event: any) => {
             if (earthData) createOrbitLine(earthData);
             if (venusData) createOrbitLine(venusData);
             if (mercureData) createOrbitLine(mercureData);
+            if (marsData) createOrbitLine(marsData);
+            if (jupiterData) createOrbitLine(jupiterData);
+            if (saturnData) createOrbitLine(saturnData);
+            if (uranusData) createOrbitLine(uranusData);
+            if (neptuneData) createOrbitLine(neptuneData);
           }
           break;
 
@@ -351,6 +462,51 @@ insideWorker((event: any) => {
           earthSpeed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
           moonSpeed = 0.005;
           console.log('Received earthData:', earthData);
+          break;
+
+        case 'marsData':
+          marsData = event.data.marsData as PlanetOrbitData;
+          marsData.color = 0xe7e8ec;
+          if (orbitPath) scene.remove(orbitPath);
+          createOrbitLine(marsData);
+          marsSpeed = calculateSpeedFromVolatility(marsData, ANIMATION_SPEED);
+          console.log('Received marsData:', marsData);
+          break;
+
+        case 'jupiterData':
+          jupiterData = event.data.jupiterData as PlanetOrbitData;
+          jupiterData.color = 0xe7e8ec;
+          if (orbitPath) scene.remove(orbitPath);
+          createOrbitLine(jupiterData);
+          jupiterSpeed = calculateSpeedFromVolatility(jupiterData, ANIMATION_SPEED);
+          console.log('Received jupiterData:', jupiterData);
+          break;
+
+        case 'saturnData':
+          saturnData = event.data.saturnData as PlanetOrbitData;
+          saturnData.color = 0xe7e8ec;
+          if (orbitPath) scene.remove(orbitPath);
+          createOrbitLine(saturnData);
+          saturnSpeed = calculateSpeedFromVolatility(saturnData, ANIMATION_SPEED);
+          console.log('Received saturnData:', saturnData);
+          break;
+
+        case 'uranusData':
+          uranusData = event.data.uranusData as PlanetOrbitData;
+          uranusData.color = 0xe7e8ec;
+          if (orbitPath) scene.remove(orbitPath);
+          createOrbitLine(uranusData);
+          uranusSpeed = calculateSpeedFromVolatility(uranusData, ANIMATION_SPEED);
+          console.log('Received uranusData:', uranusData);
+          break;
+
+        case 'neptuneData':
+          neptuneData = event.data.neptuneData as PlanetOrbitData;
+          neptuneData.color = 0xe7e8ec;
+          if (orbitPath) scene.remove(orbitPath);
+          createOrbitLine(neptuneData);
+          neptuneSpeed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
+          console.log('Received neptuneData:', neptuneData);
           break;
       }
     };

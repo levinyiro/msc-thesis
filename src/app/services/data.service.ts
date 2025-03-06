@@ -21,4 +21,24 @@ export class DataService {
     getEarthData(): Observable<any> {
       return this.http.get<any>(this.apiUrl + '/terre');
     }
+
+    getMarsData(): Observable<any> {
+      return this.http.get<any>(this.apiUrl + '/mars');
+    }
+
+    getJupiterData(): Observable<any> {
+      return this.http.get<any>(this.apiUrl + '/jupiter');
+    }
+
+    getSaturnData(): Observable<any> {
+      return this.http.get<any>(this.apiUrl + '/saturne');
+    }
+
+    getUranusData(): Observable<any> {
+      return this.http.get<any>(this.apiUrl + '/uranus');
+    }
+
+    getNeptuneData(): Observable<any> {
+      return this.http.get<any>(this.apiUrl + '/neptune');
+    }
 }

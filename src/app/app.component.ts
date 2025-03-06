@@ -13,6 +13,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   mercureData: any;
   venusData: any;
   earthData: any;
+  marsData: any;
+  jupiterData: any;
+  saturnData: any;
+  uranusData: any;
+  neptuneData: any;
 
   constructor(private dataService: DataService) { }
 
@@ -37,6 +42,41 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.earthData = data;
       if (this.worker) {
         this.worker.postMessage({ type: 'earthData', earthData: data });
+      }
+    });
+
+    this.dataService.getMarsData().subscribe(data => {
+      this.marsData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'marsData', marsData: data });
+      }
+    });
+
+    this.dataService.getJupiterData().subscribe(data => {
+      this.jupiterData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'jupiterData', jupiterData: data });
+      }
+    });
+
+    this.dataService.getSaturnData().subscribe(data => {
+      this.saturnData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'saturnData', saturnData: data });
+      }
+    });
+
+    this.dataService.getUranusData().subscribe(data => {
+      this.uranusData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'uranusData', uranusData: data });
+      }
+    });
+
+    this.dataService.getNeptuneData().subscribe(data => {
+      this.neptuneData = data;
+      if (this.worker) {
+        this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
       }
     });
   }
@@ -103,6 +143,26 @@ export class AppComponent implements OnInit, AfterViewInit {
 
       if (this.earthData) {
         this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
+      }
+
+      if (this.marsData) {
+        this.worker.postMessage({ type: 'marsData', marsData: this.marsData });
+      }
+
+      if (this.jupiterData) {
+        this.worker.postMessage({ type: 'jupiterData', jupiterData: this.jupiterData });
+      }
+
+      if (this.saturnData) {
+        this.worker.postMessage({ type: 'saturnData', saturnData: this.saturnData });
+      }
+
+      if (this.uranusData) {
+        this.worker.postMessage({ type: 'uranusData', uranusData: this.uranusData });
+      }
+
+      if (this.neptuneData) {
+        this.worker.postMessage({ type: 'neptuneData', neptuneData: this.neptuneData });
       }
 
       this.worker.onmessage = (event) => {
