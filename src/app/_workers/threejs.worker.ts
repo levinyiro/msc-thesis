@@ -12,7 +12,7 @@ insideWorker((event: any) => {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(30, canvas.width / canvas.height, 0.1, 1000);
     camera.position.z = 100;
     camera.position.y = 20;
     camera.rotation.x = -0.3;
@@ -128,6 +128,37 @@ insideWorker((event: any) => {
       createOrbitLine(neptuneData);
     }
 
+    async function loadTextures() {
+      const textureUrls = [
+        { name: 'sunBitmap', url: '../assets/textures/sun.jpg' },
+        { name: 'earthBitmap', url: '../assets/textures/earth.jpg' },
+        { name: 'mercureBitmap', url: '../assets/textures/mercure.jpg' },
+        { name: 'venusBitmap', url: '../assets/textures/venus.jpg' },
+        { name: 'marsBitmap', url: '../assets/textures/mars.jpg' },
+        { name: 'jupiterBitmap', url: '../assets/textures/jupiter.jpg' },
+        { name: 'saturnBitmap', url: '../assets/textures/saturn.jpg' },
+        { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
+        { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
+        { name: 'moonBitmap', url: '../assets/textures/moon.jpg' }
+      ];
+
+      const textures: any = {};
+
+      for (const { name, url } of textureUrls) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const blob = await response.blob();
+          const bitmap = await createImageBitmap(blob);
+          textures[name] = bitmap;
+        } catch (error) {
+          console.error(`Error loading texture ${name} from ${url}:`, error);
+        }
+      }
+
+      return textures;
+    }
+
     function animate() {
       if (sun) {
         sunSpotLight.position.copy(sun.position);
@@ -212,59 +243,39 @@ insideWorker((event: any) => {
       requestAnimationFrame(animate);
     }
 
-    Promise.all([
-      fetch('../assets/textures/sun.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/earth.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/mercure.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/venus.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/mars.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/jupiter.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/saturn.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/uranus.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/neptune.jpg').then(response => response.blob()).then(createImageBitmap),
-      fetch('../assets/textures/moon.jpg').then(response => response.blob()).then(createImageBitmap),
-    ]) // TODO: képbetöltési hiba - lokálison van, canvas image betöltés - megoldás: await a képbetöltésre
-      .then(([
-        sunBitmap,
-        earthBitmap,
-        mercureBitmap,
-        venusBitmap,
-        marsBitmap,
-        jupiterBitmap,
-        saturnBitmap,
-        uranusBitmap,
-        neptuneBitmap,
-        moonBitmap]) => {
-        sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
-        sunSpotLight.castShadow = true;
+    loadTextures().then(textures => {
+      const { sunBitmap, earthBitmap, mercureBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap } = textures;
 
-        sunSpotLight.shadow.mapSize.width = 2056;
-        sunSpotLight.shadow.mapSize.height = 2056;
-        sunSpotLight.shadow.camera.near = 0.5;
-        sunSpotLight.shadow.camera.far = 1000;
-        sunSpotLight.shadow.penumbra = 0.5;
-        sunSpotLight.shadow.focus = 1;
+      sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
+      sunSpotLight.castShadow = true;
 
-        sunSpotLight.position.set(0, 0, 0);
-        sunSpotLight.angle = Math.PI / 6;
-        sunSpotLight.penumbra = 0.2;
-        sunSpotLight.decay = 2;
-        sunSpotLight.distance = 1000;
-        scene.add(sunSpotLight);
-        sunSpotLight.target = new THREE.Object3D();
-        scene.add(sunSpotLight.target);
+      sunSpotLight.shadow.mapSize.width = 2056;
+      sunSpotLight.shadow.mapSize.height = 2056;
+      sunSpotLight.shadow.camera.near = 0.5;
+      sunSpotLight.shadow.camera.far = 1000;
+      sunSpotLight.shadow.penumbra = 0.5;
+      sunSpotLight.shadow.focus = 1;
 
-        const sunTexture = new THREE.Texture(sunBitmap);
-        sunTexture.needsUpdate = true;
-        const sunGeometry = new THREE.SphereGeometry(3, 64, 32);
-        const sunMaterial = new THREE.MeshPhongMaterial({
-          map: sunTexture,
-          emissive: 0x44fb8500,
-          emissiveIntensity: 1.5,
-        });
-        sun = new THREE.Mesh(sunGeometry, sunMaterial);
-        sun.receiveShadow = false;
-        scene.add(sun);
+      sunSpotLight.position.set(0, 0, 0);
+      sunSpotLight.angle = Math.PI / 6;
+      sunSpotLight.penumbra = 0.2;
+      sunSpotLight.decay = 2;
+      sunSpotLight.distance = 1000;
+      scene.add(sunSpotLight);
+      sunSpotLight.target = new THREE.Object3D();
+      scene.add(sunSpotLight.target);
+
+      const sunTexture = new THREE.Texture(sunBitmap);
+      sunTexture.needsUpdate = true;
+      const sunGeometry = new THREE.SphereGeometry(2, 64, 32);
+      const sunMaterial = new THREE.MeshPhongMaterial({
+        map: sunTexture,
+        emissive: 0x44fb8500,
+        emissiveIntensity: 1.5,
+      });
+      sun = new THREE.Mesh(sunGeometry, sunMaterial);
+      sun.receiveShadow = false;
+      scene.add(sun);
 
         // const backgroundGeometry = new THREE.SphereGeometry(500, 512, 512);
 
@@ -284,97 +295,96 @@ insideWorker((event: any) => {
         // const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
         // scene.add(backgroundSphere);
 
-        addStars(1000);
+      addStars(1000);
 
-        const earthTexture = new THREE.Texture(earthBitmap);
-        earthTexture.needsUpdate = true;
-        earthTexture.wrapS = THREE.RepeatWrapping;
-        earthTexture.wrapT = THREE.RepeatWrapping;
-        earthTexture.repeat.set(1, -1);
-        const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
-        earth = new THREE.Mesh(earthGeometry, earthMaterial);
-        earth.rotation.z = getAxialTilt(earthData?.axialTilt);
-        earth.castShadow = true;
-        earth.receiveShadow = true;
-        scene.add(earth);
+      const earthTexture = new THREE.Texture(earthBitmap);
+      earthTexture.needsUpdate = true;
+      earthTexture.wrapS = THREE.RepeatWrapping;
+      earthTexture.wrapT = THREE.RepeatWrapping;
+      earthTexture.repeat.set(1, -1);
+      const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+      const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
+      earth = new THREE.Mesh(earthGeometry, earthMaterial);
+      earth.rotation.z = getAxialTilt(earthData?.axialTilt);
+      earth.castShadow = true;
+      earth.receiveShadow = true;
+      scene.add(earth);
 
-        const moonTexture = new THREE.Texture(moonBitmap);
-        moonTexture.needsUpdate = true;
-        moonTexture.wrapS = THREE.RepeatWrapping;
-        moonTexture.wrapT = THREE.RepeatWrapping;
-        moonTexture.repeat.set(1, -1);
-        const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
-        const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
-        moon = new THREE.Mesh(moonGeometry, moonMaterial);
-        
-        moon.position.x = earth.position.x + moonDistance;
-        moon.position.z = earth.position.z;
-        moon.castShadow = true;
-        moon.receiveShadow = true;
-        scene.add(moon);
+      const moonTexture = new THREE.Texture(moonBitmap);
+      moonTexture.needsUpdate = true;
+      moonTexture.wrapS = THREE.RepeatWrapping;
+      moonTexture.wrapT = THREE.RepeatWrapping;
+      moonTexture.repeat.set(1, -1);
+      const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+      const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
+      moon = new THREE.Mesh(moonGeometry, moonMaterial);
+      
+      moon.position.x = earth.position.x + moonDistance;
+      moon.position.z = earth.position.z;
+      moon.castShadow = true;
+      moon.receiveShadow = true;
+      scene.add(moon);
 
-        const mercureTexture = new THREE.Texture(mercureBitmap);
-        mercureTexture.needsUpdate = true;
-        const mercureGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const mercureMaterial = new THREE.MeshPhongMaterial({ map: mercureTexture });
-        mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
-        mercure.rotation.z = getAxialTilt(mercureData?.axialTilt);
-        scene.add(mercure);
+      const mercureTexture = new THREE.Texture(mercureBitmap);
+      mercureTexture.needsUpdate = true;
+      const mercureGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const mercureMaterial = new THREE.MeshPhongMaterial({ map: mercureTexture });
+      mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
+      mercure.rotation.z = getAxialTilt(mercureData?.axialTilt);
+      scene.add(mercure);
 
-        const venusTexture = new THREE.Texture(venusBitmap);
-        venusTexture.needsUpdate = true;
-        const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
-        const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
-        venus = new THREE.Mesh(venusGeometry, venusMaterial);
-        venus.rotation.z = getAxialTilt(venusData?.axialTilt);
-        scene.add(venus);
+      const venusTexture = new THREE.Texture(venusBitmap);
+      venusTexture.needsUpdate = true;
+      const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+      const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
+      venus = new THREE.Mesh(venusGeometry, venusMaterial);
+      venus.rotation.z = getAxialTilt(venusData?.axialTilt);
+      scene.add(venus);
 
-        const marsTexture = new THREE.Texture(marsBitmap);
-        marsTexture.needsUpdate = true;
-        const marsGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
-        mars = new THREE.Mesh(marsGeometry, marsMaterial);
-        mars.rotation.z = getAxialTilt(marsData?.axialTilt);
-        scene.add(mars);
+      const marsTexture = new THREE.Texture(marsBitmap);
+      marsTexture.needsUpdate = true;
+      const marsGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
+      mars = new THREE.Mesh(marsGeometry, marsMaterial);
+      mars.rotation.z = getAxialTilt(marsData?.axialTilt);
+      scene.add(mars);
 
-        const jupiterTexture = new THREE.Texture(jupiterBitmap);
-        jupiterTexture.needsUpdate = true;
-        const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
-        jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
-        jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
-        scene.add(jupiter);
+      const jupiterTexture = new THREE.Texture(jupiterBitmap);
+      jupiterTexture.needsUpdate = true;
+      const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
+      jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
+      jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
+      scene.add(jupiter);
 
-        const saturnTexture = new THREE.Texture(saturnBitmap);
-        saturnTexture.needsUpdate = true;
-        const saturnGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
-        saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
-        saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
-        scene.add(saturn);
+      const saturnTexture = new THREE.Texture(saturnBitmap);
+      saturnTexture.needsUpdate = true;
+      const saturnGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
+      saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
+      saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
+      scene.add(saturn);
 
-        const uranusTexture = new THREE.Texture(uranusBitmap);
-        uranusTexture.needsUpdate = true;
-        const uranusGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
-        uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
-        uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
-        scene.add(uranus);
+      const uranusTexture = new THREE.Texture(uranusBitmap);
+      uranusTexture.needsUpdate = true;
+      const uranusGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
+      uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
+      uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
+      scene.add(uranus);
 
-        const neptuneTexture = new THREE.Texture(neptuneBitmap);
-        neptuneTexture.needsUpdate = true;
-        const neptuneGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-        const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
-        neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
-        neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
-        scene.add(neptune);
+      const neptuneTexture = new THREE.Texture(neptuneBitmap);
+      neptuneTexture.needsUpdate = true;
+      const neptuneGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
+      neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
+      neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
+      scene.add(neptune);
 
-        animate();
-      })
-      .catch(error => {
+      animate();
+      }).catch(error => {
         console.error('Error loading textures:', error);
-      });
+    });
 
     self.onmessage = function (event) {
       switch (event.data.type) {
@@ -466,7 +476,7 @@ insideWorker((event: any) => {
 
         case 'marsData':
           marsData = event.data.marsData as PlanetOrbitData;
-          marsData.color = 0xe7e8ec;
+          marsData.color = 0x993d00;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(marsData);
           marsSpeed = calculateSpeedFromVolatility(marsData, ANIMATION_SPEED);
@@ -475,7 +485,7 @@ insideWorker((event: any) => {
 
         case 'jupiterData':
           jupiterData = event.data.jupiterData as PlanetOrbitData;
-          jupiterData.color = 0xe7e8ec;
+          jupiterData.color = 0xb07f35;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(jupiterData);
           jupiterSpeed = calculateSpeedFromVolatility(jupiterData, ANIMATION_SPEED);
@@ -484,7 +494,7 @@ insideWorker((event: any) => {
 
         case 'saturnData':
           saturnData = event.data.saturnData as PlanetOrbitData;
-          saturnData.color = 0xe7e8ec;
+          saturnData.color = 0xb08f36;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(saturnData);
           saturnSpeed = calculateSpeedFromVolatility(saturnData, ANIMATION_SPEED);
@@ -493,7 +503,7 @@ insideWorker((event: any) => {
 
         case 'uranusData':
           uranusData = event.data.uranusData as PlanetOrbitData;
-          uranusData.color = 0xe7e8ec;
+          uranusData.color = 0x5580aa;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(uranusData);
           uranusSpeed = calculateSpeedFromVolatility(uranusData, ANIMATION_SPEED);
@@ -502,7 +512,7 @@ insideWorker((event: any) => {
 
         case 'neptuneData':
           neptuneData = event.data.neptuneData as PlanetOrbitData;
-          neptuneData.color = 0xe7e8ec;
+          neptuneData.color = 0x366896;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(neptuneData);
           neptuneSpeed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
