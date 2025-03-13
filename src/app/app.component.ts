@@ -8,6 +8,7 @@ import { DataService } from './services/data.service';
 })
 export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
+  monitorWorker?: Worker;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
   mercureData: any;
@@ -19,10 +20,24 @@ export class AppComponent implements OnInit, AfterViewInit {
   uranusData: any;
   neptuneData: any;
 
+  fps: string = '0';
+  cpuUsage: string = '0%';
+  memoryUsage: string = '0 MB';
+
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
+
+    // this.monitorWorker = new Worker(new URL('src/app/_workers/monitor.worker.ts', import.meta.url));
+    // this.monitorWorker.postMessage('start');
+
+    // this.monitorWorker.onmessage = ({ data }) => {
+    //   this.cpuUsage = `${data.cpu}%`;
+    //   this.memoryUsage = `${data.memory} MB`;
+    // };
+
+    this.monitorSystemStats();
 
     this.dataService.getMercureData().subscribe(data => {
       this.mercureData = data;
@@ -79,6 +94,19 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
       }
     });
+  }
+
+  monitorSystemStats() {
+    setInterval(() => {
+      if ((performance as any).memory) {
+        const memoryInfo = (performance as any).memory;
+        this.memoryUsage = `${(memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`;
+      }
+
+      if ('deviceMemory' in navigator) {
+        this.cpuUsage = `${(navigator as any).deviceMemory} GB (estimated)`;
+      }
+    }, 1000);
   }
 
   ngAfterViewInit() {
@@ -167,23 +195,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
       this.worker.onmessage = (event) => {
         if (event.data.type === 'fps') {
-          const fpsCounter = document.getElementById('fpsCounter');
-          if (fpsCounter) {
-            fpsCounter.innerText = `FPS: ${event.data.fps}`;
-          }
+          this.fps = event.data.fps;
         }
       };
-    
-      const fpsElement = document.createElement('div');
-      fpsElement.id = 'fpsCounter';
-      fpsElement.style.position = 'absolute';
-      fpsElement.style.top = '10px';
-      fpsElement.style.right = '10px';
-      fpsElement.style.color = 'white';
-      fpsElement.style.background = 'rgba(0, 0, 0, 0.5)';
-      fpsElement.style.padding = '5px';
-      fpsElement.style.borderRadius = '5px';
-      document.body.appendChild(fpsElement);
     }
   }
 }
