@@ -122,6 +122,8 @@ After that you have to implement the following codes
 - [x] Textúrák módosítása
 - [x] Vonal a pályán
 - [x] Kapcsoló - eltűnjön a vonal
+- [ ] jelenlegi bolygópozíció lekérése
+- [ ] lensflare
 
 # 2024.11.
 
