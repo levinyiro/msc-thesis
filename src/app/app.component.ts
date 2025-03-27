@@ -1,5 +1,6 @@
 import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from './services/data.service';
+import { MonitorService } from './services/monitor.service';
 
 @Component({
   selector: 'app-root',
@@ -9,6 +10,7 @@ import { DataService } from './services/data.service';
 export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   monitorWorker?: Worker;
+  private loggingInterval: any;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
   mercureData: any;
@@ -24,7 +26,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   cpuUsage: string = '0%';
   memoryUsage: string = '0 MB';
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private monitorService: MonitorService) { }
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
@@ -97,15 +99,33 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   monitorSystemStats() {
-    setInterval(() => {
-      if ((performance as any).memory) {
-        const memoryInfo = (performance as any).memory;
-        this.memoryUsage = `${(memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`;
+    if (this.loggingInterval) {
+      clearInterval(this.loggingInterval);
+    }
+
+    this.loggingInterval = setInterval(() => {
+      // Get CPU usage (simplified - in a real app you might want more accurate measurement)
+      let cpuUsage = 0;
+      if ('deviceMemory' in navigator) {
+        cpuUsage = parseFloat((navigator as any).deviceMemory) || 0;
       }
 
-      if ('deviceMemory' in navigator) {
-        this.cpuUsage = `${(navigator as any).deviceMemory} GB (estimated)`;
+      // Get memory usage
+      let memoryUsage = 0;
+      if ((performance as any).memory) {
+        const memoryInfo = (performance as any).memory;
+        memoryUsage = parseFloat((memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2));
       }
+
+      // Get FPS (already being tracked)
+      const fpsValue = parseFloat(this.fps) || 0;
+
+      // Log to localStorage
+      this.monitorService.logMetrics(cpuUsage, memoryUsage, fpsValue);
+
+      // Update UI (existing code)
+      this.memoryUsage = `${memoryUsage} MB`;
+      this.cpuUsage = `${cpuUsage} GB (estimated)`;
     }, 1000);
   }
 
@@ -198,6 +218,12 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.fps = event.data.fps;
         }
       };
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.loggingInterval) {
+      clearInterval(this.loggingInterval);
     }
   }
 }

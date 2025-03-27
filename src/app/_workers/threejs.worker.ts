@@ -139,7 +139,8 @@ insideWorker((event: any) => {
         { name: 'saturnBitmap', url: '../assets/textures/saturn.jpg' },
         { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
         { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
-        { name: 'moonBitmap', url: '../assets/textures/moon.jpg' }
+        { name: 'moonBitmap', url: '../assets/textures/moon.jpg' },
+        { name: 'lensflareBitmap', url: '../assets/textures/lensflare.png' }
       ];
 
       const textures: any = {};
@@ -244,7 +245,7 @@ insideWorker((event: any) => {
     }
 
     loadTextures().then(textures => {
-      const { sunBitmap, earthBitmap, mercureBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap } = textures;
+      const { sunBitmap, earthBitmap, mercureBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
       sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
       sunSpotLight.castShadow = true;
@@ -276,6 +277,13 @@ insideWorker((event: any) => {
       sun = new THREE.Mesh(sunGeometry, sunMaterial);
       sun.receiveShadow = false;
       scene.add(sun);
+
+      // TODO: Lensflare hozzáadása
+      // const lensflareTexture = new THREE.Texture(lensflareBitmap);
+      // lensflareTexture.needsUpdate = true;
+      // const lensflare = new Lensflare();
+      // lensflare.addElement(new LensflareElement(lensflareTexture, 512, 0));
+      // sun.add(lensflare);
 
         // const backgroundGeometry = new THREE.SphereGeometry(500, 512, 512);
 
