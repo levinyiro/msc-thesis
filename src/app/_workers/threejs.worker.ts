@@ -140,7 +140,7 @@ insideWorker((event: any) => {
         { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
         { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
         { name: 'moonBitmap', url: '../assets/textures/moon.jpg' },
-        { name: 'lensflareBitmap', url: '../assets/textures/lensflare.png' }
+        // { name: 'lensflareBitmap', url: '../assets/textures/lensflare.png' }
       ];
 
       const textures: any = {};

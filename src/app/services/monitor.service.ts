@@ -38,4 +38,29 @@ export class MonitorService {
   clearMetrics(): void {
     localStorage.removeItem(this.STORAGE_KEY);
   }
+
+  exportToCSV(): void {
+    const data = this.getMetrics();
+    if (data.cpu.length === 0) {
+      alert('No metrics data available to export');
+      return;
+    }
+
+    let csv = 'Timestamp,CPU (GB),Memory (MB),FPS\n';
+    
+    for (let i = 0; i < data.cpu.length; i++) {
+      const timestamp = new Date(Date.now() - (data.cpu.length - i - 1) * 1000).toISOString();
+      csv += `${timestamp},${data.cpu[i]},${data.memory[i]},${data.fps[i]}\n`;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `performance_metrics_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }

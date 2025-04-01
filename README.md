@@ -124,6 +124,7 @@ After that you have to implement the following codes
 - [x] Kapcsoló - eltűnjön a vonal
 - [ ] jelenlegi bolygópozíció lekérése
 - [ ] lensflare
+- [ ] resize canvas reload
 
 # 2024.11.
 
