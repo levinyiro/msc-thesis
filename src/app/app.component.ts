@@ -26,6 +26,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   cpuUsage: string = '0%';
   memoryUsage: string = '0 MB';
 
+  isAddingPlanet = false;
+  newPlanetData: any = {};
+
   constructor(private dataService: DataService, private monitorService: MonitorService) { }
 
   ngOnInit() {
@@ -131,8 +134,11 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.worker.postMessage({
             type: 'mousedown',
             mouseX: event.clientX,
-            mouseY: event.clientY
+            mouseY: event.clientY,
+            planetData: this.newPlanetData
           });
+
+          this.isAddingPlanet = false;
         }
       });
 
@@ -147,7 +153,8 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.worker.postMessage({
             type: 'mousemove',
             mouseX: event.clientX,
-            mouseY: event.clientY
+            mouseY: event.clientY,
+            planetData: this.newPlanetData
           });
         }
       });
@@ -210,6 +217,29 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   exportMetricsToCSV(): void {
     this.monitorService.exportToCSV();
+  }
+
+  startAddingPlanet() {
+    this.isAddingPlanet = true;
+    this.newPlanetData = {
+      name: `Planet ${Math.floor(Math.random() * 1000)}`,
+      color: this.getRandomColor().toString(),
+      size: 0.2 + Math.random() * 0.5,
+      semimajorAxis: 0,
+      eccentricity: 0,
+      axialTilt: Math.random() * 30
+    };
+    
+    if (this.worker) {
+      this.worker.postMessage({ 
+        type: 'startAddingPlanet', 
+        planetData: this.newPlanetData 
+      });
+    }
+  }
+  
+  private getRandomColor(): number {
+    return Math.floor(Math.random() * 0xffffff);
   }
 
   ngOnDestroy() {

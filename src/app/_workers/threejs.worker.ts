@@ -1,3 +1,4 @@
+import { log } from "console";
 import { PlanetOrbitData } from "./models/objectData";
 
 const insideWorker = require("offscreen-canvas/inside-worker");
@@ -6,7 +7,7 @@ const THREE = require('three');
 insideWorker((event: any) => {
   if (event.data.canvas) {
     const canvas = event.data.canvas;
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setClearColor(0x111111);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -55,6 +56,17 @@ insideWorker((event: any) => {
     let frameCount = 0;
     let lastFpsUpdate = performance.now();
     let fps = 0;
+
+    // add new planet
+    let isAddingPlanet = false;
+    let previewPlanet: any | null = null;
+    let previewOrbit: any | null = null;
+    const customPlanets: {
+      mesh: any;
+      angle: number;
+      speed: number;
+      data: PlanetOrbitData;
+    }[] = [];
 
     const ANIMATION_SPEED = 0.0001;
 
@@ -240,8 +252,36 @@ insideWorker((event: any) => {
         postMessage({ type: 'fps', fps: fps });
       }
 
+      customPlanets.forEach(planet => {
+        planet.angle += planet.speed;
+        const orbitRadius = planet.data.semimajorAxis! / distanceDivider;
+        planet.mesh.position.x = Math.sin(planet.angle) * orbitRadius;
+        planet.mesh.position.z = Math.cos(planet.angle) * orbitRadius;
+        planet.mesh.rotation.y += 0.05;
+      });
+
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
+    }
+
+    function createNewPlanet(data: PlanetOrbitData, position: any): any {
+      const geometry = new THREE.SphereGeometry(data.size || 0.3, 32, 32);
+      
+      const material = new THREE.MeshPhongMaterial({
+        color: data.color,
+      });
+    
+      const planet = new THREE.Mesh(geometry, material);
+      planet.position.copy(position);
+      planet.rotation.z = getAxialTilt(data.axialTilt || 0);
+      planet.castShadow = true;
+      planet.receiveShadow = true;
+    
+      return planet;
+    }
+
+    function calculateOrbitDistance(position: any): number {
+      return position.distanceTo(sun.position) * distanceDivider;
     }
 
     loadTextures().then(textures => {
@@ -397,34 +437,106 @@ insideWorker((event: any) => {
     self.onmessage = function (event) {
       switch (event.data.type) {
         case 'mousedown':
-          isDragging = true;
-          previousMousePosition.x = event.data.mouseX;
-          previousMousePosition.y = event.data.mouseY;
+          if (isAddingPlanet) {
+            const position = previewPlanet?.position.clone() || new THREE.Vector3(10, 0, 0);
+            const orbitDistance = calculateOrbitDistance(position);
+            
+            const colorNum = typeof event.data.planetData.color === 'string' 
+              ? parseInt(event.data.planetData.color.replace('#', '0x')) 
+              : 0xfff000;
+            
+            const newPlanetData: PlanetOrbitData = {
+              semimajorAxis: orbitDistance,
+              perihelion: orbitDistance,
+              aphelion: orbitDistance,
+              eccentricity: 0,
+              color: colorNum,
+              axialTilt: event.data.planetData.axialTilt || 0,
+              size: event.data.planetData.size || 0.3,
+              mass: { massValue: 1, massExponent: 24 }
+            };
+        
+            const newPlanet = createNewPlanet(newPlanetData, position);
+            scene.add(newPlanet);
+            
+            customPlanets.push({
+              mesh: newPlanet,
+              angle: Math.atan2(position.z, position.x),
+              speed: calculateSpeedFromVolatility(newPlanetData, ANIMATION_SPEED),
+              data: newPlanetData
+            });
+        
+            if (previewPlanet) {
+              scene.remove(previewPlanet);
+              previewPlanet = null;
+            }
+            if (previewOrbit) {
+              scene.remove(previewOrbit);
+              previewOrbit = null;
+            }
+            
+            if (showLines) {
+              const permanentOrbit = createOrbitLine(newPlanetData);
+              orbitLines.push(permanentOrbit);
+            }
+        
+            isAddingPlanet = false;
+          } else {
+            
+            isDragging = true;
+            previousMousePosition.x = event.data.mouseX;
+            previousMousePosition.y = event.data.mouseY;
+          }
           break;
     
         case 'mouseup':
           isDragging = false;
           break;
     
-        case 'mousemove':
-          if (isDragging) {
-            const deltaX = event.data.mouseX - previousMousePosition.x;
-            const deltaY = event.data.mouseY - previousMousePosition.y;
-            
-            yaw -= deltaX * 0.001;            
-            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
-    
-            const radius = camera.position.distanceTo(sun.position);
-            const x = radius * Math.cos(pitch) * Math.sin(yaw);
-            const y = radius * Math.sin(pitch);
-            const z = radius * Math.cos(pitch) * Math.cos(yaw);
-    
-            camera.position.set(sun.position.x + x, sun.position.y + y, sun.position.z + z);
-            camera.lookAt(sun.position);
-    
-            previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
-          }
-          break;
+          case 'mousemove':
+            if (isDragging) {
+              const deltaX = event.data.mouseX - previousMousePosition.x;
+              const deltaY = event.data.mouseY - previousMousePosition.y;
+              
+              yaw -= deltaX * 0.001;            
+              pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
+      
+              const radius = camera.position.distanceTo(sun.position);
+              const x = radius * Math.cos(pitch) * Math.sin(yaw);
+              const y = radius * Math.sin(pitch);
+              const z = radius * Math.cos(pitch) * Math.cos(yaw);
+      
+              camera.position.set(sun.position.x + x, sun.position.y + y, sun.position.z + z);
+              camera.lookAt(sun.position);
+      
+              previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
+            } else if (isAddingPlanet && previewPlanet) {
+              const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
+              const mouseY = -(event.data.mouseY / canvas.height) * 2 + 1;
+              
+              const vector = new THREE.Vector3(mouseX, mouseY, 0.5);
+              vector.unproject(camera);
+              const dir = vector.sub(camera.position).normalize();
+              const distance = -camera.position.y / dir.y;
+              const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+              
+              previewPlanet.position.copy(pos);
+  
+              if (previewOrbit) scene.remove(previewOrbit);
+              
+              const orbitData: PlanetOrbitData = {
+                semimajorAxis: calculateOrbitDistance(pos),
+                perihelion: calculateOrbitDistance(pos),
+                aphelion: calculateOrbitDistance(pos),
+                eccentricity: 0,
+                color: 0xfff000,
+                axialTilt: 0
+              };
+              
+              if (previewOrbit) scene.remove(previewOrbit);
+              previewOrbit = createOrbitLine(orbitData);
+            }
+            break;
 
         case 'toggleLines':
           showLines = event.data.showLines;
@@ -526,6 +638,19 @@ insideWorker((event: any) => {
           neptuneSpeed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
           console.log('Received neptuneData:', neptuneData);
           break;
+
+          case 'startAddingPlanet':
+            isAddingPlanet = true;
+            
+            const previewGeometry = new THREE.SphereGeometry(event.data.planetData.size, 32, 32);
+            const previewMaterial = new THREE.MeshPhongMaterial({ 
+              color: 0xfff000,
+              transparent: true,
+              opacity: 0.7
+            });
+            previewPlanet = new THREE.Mesh(previewGeometry, previewMaterial);
+            scene.add(previewPlanet);
+            break;
       }
     };
   }
