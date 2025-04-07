@@ -1,0 +1,20 @@
+let  geometry = new THREE.SphereGeometry( 0.3, 32, 32 );
+                let material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+                sunMesh = new THREE.Mesh( geometry, material );
+                // The lensflare's opacity is depending on THIS position!!
+                sunMesh.position.set(20, 2,40);
+                scene.add(sunMesh);
+                imageLoader.load( '/images/glow.webp', glowImage => {
+                    let spriteMaterial = new THREE.SpriteMaterial(
+                        {
+                            map: new THREE.CanvasTexture(glowImage),
+                            useScreenCoordinates: false,
+                            color: 0xffffff, transparent: true,
+                            blending: THREE.AdditiveBlending,
+                        });
+                    spriteMaterial.polygonOffset = true;
+                    spriteMaterial.polygonOffsetFactor = -50;
+                    let sprite = new THREE.Sprite( spriteMaterial );
+                    sprite.scale.set(3, 3, 3);
+                    sunMesh.add(sprite); // this centers the glow at the mesh
+                });
