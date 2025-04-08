@@ -10,7 +10,7 @@ import { MonitorService } from './services/monitor.service';
 export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   monitorWorker?: Worker;
-  private loggingInterval: any;
+  loggingInterval: any;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
   mercureData: any;
@@ -22,9 +22,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   uranusData: any;
   neptuneData: any;
 
-  fps: string = '0';
-  cpuUsage: string = '0%';
-  memoryUsage: string = '0 MB';
+  cpuUsage: string = '';
+  memoryUsage: string = '';
+  gpuUsage: string = '';
+  fps: string = '';
 
   isAddingPlanet = false;
   newPlanetData: any = {};
@@ -97,27 +98,90 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (this.loggingInterval) {
       clearInterval(this.loggingInterval);
     }
-
+  
+    // GPU renderer becslés
+    const estimateGpuPower = (renderer: string): number => {
+      const gpuScores: { [key: string]: number } = {
+        'Apple M2': 95,
+        'Apple M1': 85,
+        'Intel': 40,
+        'NVIDIA': 90,
+        'AMD': 80,
+        'ANGLE': 60,
+      };
+  
+      for (const [key, value] of Object.entries(gpuScores)) {
+        if (renderer.includes(key)) return value;
+      }
+      return 50;
+    };
+  
+    // GPU név lekérése
+    let gpuRenderer = 'Unknown GPU';
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const debugInfo = (gl as any).getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        gpuRenderer = (gl as any).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+      }
+    }
+  
+    const gpuScore = estimateGpuPower(gpuRenderer);
+  
+    // 🔁 Folyamatos frame időmérés
+    let lastFrameTime = performance.now();
+    const frameDurations: number[] = [];
+  
+    const measureGPU = () => {
+      const now = performance.now();
+      const duration = now - lastFrameTime;
+      frameDurations.push(duration);
+      if (frameDurations.length > 60) frameDurations.shift();
+  
+      lastFrameTime = now;
+      requestAnimationFrame(measureGPU);
+    };
+    measureGPU(); // Elindítjuk egyszer
+  
     this.loggingInterval = setInterval(() => {
       let cpuUsage = 0;
-      if ('deviceMemory' in navigator) {
-        cpuUsage = parseFloat((navigator as any).deviceMemory) || 0;
+  
+      if (typeof performance !== 'undefined' && (performance as any).memory) {
+        const memoryInfo = (performance as any).memory;
+        const totalJSHeap = memoryInfo.totalJSHeapSize;
+        const usedJSHeap = memoryInfo.usedJSHeapSize;
+        cpuUsage = totalJSHeap > 0 ? (usedJSHeap / totalJSHeap) * 100 : 0;
       }
-
+  
       let memoryUsage = 0;
       if ((performance as any).memory) {
         const memoryInfo = (performance as any).memory;
         memoryUsage = parseFloat((memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2));
       }
-
-      const fpsValue = parseFloat(this.fps) || 0;
-
+  
+      // Itt már mindig az aktuális frameDurations alapján számolunk:
+      const avgFrameDuration =
+        frameDurations.reduce((a, b) => a + b, 0) / frameDurations.length || 16.67;
+      const fpsValue = 1000 / avgFrameDuration;
+  
+      // GPU usage becslés (frame time alapján): 0% ha 16.67ms, 100% ha 33.33ms
+      const gpuUsageFromFPS = Math.max(
+        0,
+        Math.min(100, ((33.33 - avgFrameDuration) / 16.67) * 100)
+      );
+  
+      const finalGpuUsage = ((gpuScore + gpuUsageFromFPS) / 2).toFixed(2);
+  
+      // Naplózás és UI frissítés
       this.monitorService.logMetrics(cpuUsage, memoryUsage, fpsValue);
-
+  
       this.memoryUsage = `${memoryUsage} MB`;
-      this.cpuUsage = `${cpuUsage} GB (estimated)`;
+      this.cpuUsage = `${cpuUsage.toFixed(2)}%`;
+      this.gpuUsage = `${finalGpuUsage}%`;
+  
     }, 1000);
-  }
+  }  
 
   ngAfterViewInit() {
     this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));

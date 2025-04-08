@@ -125,6 +125,11 @@ After that you have to implement the following codes
 - [ ] jelenlegi bolygópozíció lekérése
 - [ ] lensflare
 - [ ] resize canvas reload
+- [ ] GPU-CPU mérés javítása
+- [ ] Még több user interaction
+- [ ] változtatni a fókuszt más bolygókra
+- [ ] exobolygók számítása - milyen hőmérséklet lehet rajta, mennyire lehet terraformálni
+- [ ] Ezeknek az optimalizálása
 
 # 2024.11.
 
