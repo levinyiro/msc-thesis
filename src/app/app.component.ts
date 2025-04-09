@@ -99,7 +99,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       clearInterval(this.loggingInterval);
     }
   
-    // GPU renderer becslés
     const estimateGpuPower = (renderer: string): number => {
       const gpuScores: { [key: string]: number } = {
         'Apple M2': 95,
@@ -116,7 +115,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       return 50;
     };
   
-    // GPU név lekérése
     let gpuRenderer = 'Unknown GPU';
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -129,7 +127,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   
     const gpuScore = estimateGpuPower(gpuRenderer);
   
-    // 🔁 Folyamatos frame időmérés
     let lastFrameTime = performance.now();
     const frameDurations: number[] = [];
   
@@ -142,7 +139,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       lastFrameTime = now;
       requestAnimationFrame(measureGPU);
     };
-    measureGPU(); // Elindítjuk egyszer
+    measureGPU();
   
     this.loggingInterval = setInterval(() => {
       let cpuUsage = 0;
@@ -160,12 +157,10 @@ export class AppComponent implements OnInit, AfterViewInit {
         memoryUsage = parseFloat((memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2));
       }
   
-      // Itt már mindig az aktuális frameDurations alapján számolunk:
       const avgFrameDuration =
         frameDurations.reduce((a, b) => a + b, 0) / frameDurations.length || 16.67;
       const fpsValue = 1000 / avgFrameDuration;
   
-      // GPU usage becslés (frame time alapján): 0% ha 16.67ms, 100% ha 33.33ms
       const gpuUsageFromFPS = Math.max(
         0,
         Math.min(100, ((33.33 - avgFrameDuration) / 16.67) * 100)
@@ -173,7 +168,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   
       const finalGpuUsage = ((gpuScore + gpuUsageFromFPS) / 2).toFixed(2);
   
-      // Naplózás és UI frissítés
       this.monitorService.logMetrics(cpuUsage, memoryUsage, fpsValue);
   
       this.memoryUsage = `${memoryUsage} MB`;
@@ -193,15 +187,20 @@ export class AppComponent implements OnInit, AfterViewInit {
       const offscreen = htmlCanvas.transferControlToOffscreen() as any;
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
 
+
       htmlCanvas.addEventListener('mousedown', (event: MouseEvent) => {
         if (this.worker) {
+          const rect = htmlCanvas.getBoundingClientRect();
+      
           this.worker.postMessage({
             type: 'mousedown',
-            mouseX: event.clientX,
-            mouseY: event.clientY,
+            mouseX: event.clientX - rect.left,
+            mouseY: event.clientY - rect.top,
+            canvasWidth: htmlCanvas.width,
+            canvasHeight: htmlCanvas.height,
             planetData: this.newPlanetData
           });
-
+      
           this.isAddingPlanet = false;
         }
       });

@@ -23,7 +23,7 @@ insideWorker((event: any) => {
 
     let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercure: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
     let earthData: any, mercureData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
-    
+
     let earthAngle = 0;
     let mercureAngle = 0;
     let venusAngle = 0;
@@ -68,27 +68,31 @@ insideWorker((event: any) => {
       data: PlanetOrbitData;
     }[] = [];
 
+    let customPlanetsIndex = 0;
+    let targetObject: any = sun;
+    let cameraMoveSpeed = 0.1;
+
     const ANIMATION_SPEED = 0.0001;
 
     function addStars(count: number) {
       const starGeometry = new THREE.SphereGeometry(0.3, 8, 8);
       const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const sphereRadius = 500;
-    
+
       for (let i = 0; i < count; i++) {
         const star = new THREE.Mesh(starGeometry, starMaterial);
-    
+
         const theta = Math.random() * 2 * Math.PI;
         const phi = Math.acos(2 * Math.random() - 1);
-    
+
         star.position.x = sphereRadius * Math.sin(phi) * Math.cos(theta);
         star.position.y = sphereRadius * Math.sin(phi) * Math.sin(theta);
         star.position.z = sphereRadius * Math.cos(phi);
-    
+
         scene.add(star);
       }
     }
-    
+
     function createOrbitLine(data: PlanetOrbitData): any {
       if (!data) return null;
 
@@ -244,7 +248,7 @@ insideWorker((event: any) => {
       // fps counting
       const now = performance.now();
       frameCount++;
-    
+
       if (now - lastFpsUpdate >= 1000) {
         fps = frameCount;
         frameCount = 0;
@@ -266,17 +270,17 @@ insideWorker((event: any) => {
 
     function createNewPlanet(data: PlanetOrbitData, position: any): any {
       const geometry = new THREE.SphereGeometry(data.size || 0.3, 32, 32);
-      
+
       const material = new THREE.MeshPhongMaterial({
         color: data.color,
       });
-    
+
       const planet = new THREE.Mesh(geometry, material);
       planet.position.copy(position);
       planet.rotation.z = getAxialTilt(data.axialTilt || 0);
       planet.castShadow = true;
       planet.receiveShadow = true;
-    
+
       return planet;
     }
 
@@ -316,6 +320,7 @@ insideWorker((event: any) => {
       });
       sun = new THREE.Mesh(sunGeometry, sunMaterial);
       sun.receiveShadow = false;
+      sun.name = 'sun';
       scene.add(sun);
 
       // TODO: Lensflare hozzáadása
@@ -325,23 +330,23 @@ insideWorker((event: any) => {
       // lensflare.addElement(new LensflareElement(lensflareTexture, 512, 0));
       // sun.add(lensflare);
 
-        // const backgroundGeometry = new THREE.SphereGeometry(500, 512, 512);
+      // const backgroundGeometry = new THREE.SphereGeometry(500, 512, 512);
 
-        // const backgroundTexture = new THREE.Texture(backgroundBitmap);
-        // backgroundTexture.needsUpdate = true;
-        
-        // backgroundTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        // backgroundTexture.magFilter = THREE.LinearFilter;
-        
-        // backgroundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        
-        // const backgroundMaterial = new THREE.MeshBasicMaterial({
-        //   map: backgroundTexture,
-        //   side: THREE.BackSide,
-        // });
-        
-        // const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-        // scene.add(backgroundSphere);
+      // const backgroundTexture = new THREE.Texture(backgroundBitmap);
+      // backgroundTexture.needsUpdate = true;
+
+      // backgroundTexture.minFilter = THREE.LinearMipMapLinearFilter;
+      // backgroundTexture.magFilter = THREE.LinearFilter;
+
+      // backgroundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+      // const backgroundMaterial = new THREE.MeshBasicMaterial({
+      //   map: backgroundTexture,
+      //   side: THREE.BackSide,
+      // });
+
+      // const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+      // scene.add(backgroundSphere);
 
       addStars(1000);
 
@@ -356,6 +361,7 @@ insideWorker((event: any) => {
       earth.rotation.z = getAxialTilt(earthData?.axialTilt);
       earth.castShadow = true;
       earth.receiveShadow = true;
+      earth.name = 'earth';
       scene.add(earth);
 
       const moonTexture = new THREE.Texture(moonBitmap);
@@ -366,11 +372,12 @@ insideWorker((event: any) => {
       const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
       const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
       moon = new THREE.Mesh(moonGeometry, moonMaterial);
-      
+
       moon.position.x = earth.position.x + moonDistance;
       moon.position.z = earth.position.z;
       moon.castShadow = true;
       moon.receiveShadow = true;
+      moon.name = 'moon';
       scene.add(moon);
 
       const mercureTexture = new THREE.Texture(mercureBitmap);
@@ -379,6 +386,7 @@ insideWorker((event: any) => {
       const mercureMaterial = new THREE.MeshPhongMaterial({ map: mercureTexture });
       mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
       mercure.rotation.z = getAxialTilt(mercureData?.axialTilt);
+      mercure.name = 'mercure';
       scene.add(mercure);
 
       const venusTexture = new THREE.Texture(venusBitmap);
@@ -387,6 +395,7 @@ insideWorker((event: any) => {
       const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
       venus = new THREE.Mesh(venusGeometry, venusMaterial);
       venus.rotation.z = getAxialTilt(venusData?.axialTilt);
+      venus.name = 'venus';
       scene.add(venus);
 
       const marsTexture = new THREE.Texture(marsBitmap);
@@ -395,6 +404,7 @@ insideWorker((event: any) => {
       const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
       mars = new THREE.Mesh(marsGeometry, marsMaterial);
       mars.rotation.z = getAxialTilt(marsData?.axialTilt);
+      mars.name = 'mars';
       scene.add(mars);
 
       const jupiterTexture = new THREE.Texture(jupiterBitmap);
@@ -403,6 +413,7 @@ insideWorker((event: any) => {
       const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
       jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
       jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
+      jupiter.name = 'jupiter';
       scene.add(jupiter);
 
       const saturnTexture = new THREE.Texture(saturnBitmap);
@@ -411,6 +422,7 @@ insideWorker((event: any) => {
       const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
       saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
       saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
+      saturn.name = 'saturn';
       scene.add(saturn);
 
       const uranusTexture = new THREE.Texture(uranusBitmap);
@@ -419,6 +431,7 @@ insideWorker((event: any) => {
       const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
       uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
       uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
+      uranus.name = 'uranus'
       scene.add(uranus);
 
       const neptuneTexture = new THREE.Texture(neptuneBitmap);
@@ -427,45 +440,88 @@ insideWorker((event: any) => {
       const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
       neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
       neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
+      neptune.name = 'neptune'
       scene.add(neptune);
 
       animate();
-      }).catch(error => {
-        console.error('Error loading textures:', error);
+    }).catch(error => {
+      console.error('Error loading textures:', error);
     });
 
     self.onmessage = function (event) {
       switch (event.data.type) {
         case 'mousedown':
+          if (!camera || !scene) return;
+
+          const { mouseX, mouseY, canvasWidth, canvasHeight } = event.data;
+
+          const raycaster = new THREE.Raycaster();
+          const mouse = new THREE.Vector2(
+            (mouseX / canvasWidth) * 2 - 1,
+            -(mouseY / canvasHeight) * 2 + 1
+          );
+
+          raycaster.setFromCamera(mouse, camera);
+          const intersects = raycaster.intersectObjects(scene.children, true);
+
+          if (intersects.length > 0) {
+            const intersected = intersects[0].object;
+            if (intersected.name && (intersected.name !== 'sun' || intersected.name.startsWith('newPlanet'))) {
+              console.log('Clicked object:', intersected.name || 'Unnamed');
+              targetObject = intersected;
+              
+              const targetPosition = intersects[0].point;
+              const direction = new THREE.Vector3()
+                .subVectors(camera.position, targetPosition)
+                .normalize();
+              
+              const distance = 10;
+              const newCameraPosition = targetPosition.clone().addScaledVector(direction, distance);
+              
+              camera.position.copy(newCameraPosition);
+              camera.lookAt(targetPosition);
+              
+              // if (controls) { // TODO: here follow camera
+              //   controls.target.copy(targetPosition);
+              //   controls.update();
+              // }
+            } else {
+              // targetObject = sun;
+            }
+          }
+
           if (isAddingPlanet) {
-            const position = previewPlanet?.position.clone() || new THREE.Vector3(10, 0, 0);
+            const { planetData } = event.data;
+
+            const position = previewPlanet?.position.clone() ?? new THREE.Vector3(10, 0, 0);
             const orbitDistance = calculateOrbitDistance(position);
-            
-            const colorNum = typeof event.data.planetData.color === 'string' 
-              ? parseInt(event.data.planetData.color.replace('#', '0x')) 
+
+            const colorNum = typeof planetData.color === 'string'
+              ? parseInt(planetData.color.replace('#', '0x'))
               : 0xfff000;
-            
+
             const newPlanetData: PlanetOrbitData = {
               semimajorAxis: orbitDistance,
               perihelion: orbitDistance,
               aphelion: orbitDistance,
               eccentricity: 0,
               color: colorNum,
-              axialTilt: event.data.planetData.axialTilt || 0,
-              size: event.data.planetData.size || 0.3,
+              axialTilt: planetData.axialTilt ?? 0,
+              size: planetData.size ?? 0.3,
               mass: { massValue: 1, massExponent: 24 }
             };
-        
+
             const newPlanet = createNewPlanet(newPlanetData, position);
+            newPlanet.name = 'newPlanet' + ++customPlanetsIndex;
             scene.add(newPlanet);
-            
+
             customPlanets.push({
               mesh: newPlanet,
               angle: Math.atan2(position.z, position.x),
               speed: calculateSpeedFromVolatility(newPlanetData, ANIMATION_SPEED),
               data: newPlanetData
             });
-        
+
             if (previewPlanet) {
               scene.remove(previewPlanet);
               previewPlanet = null;
@@ -474,69 +530,78 @@ insideWorker((event: any) => {
               scene.remove(previewOrbit);
               previewOrbit = null;
             }
-            
+
             if (showLines) {
               const permanentOrbit = createOrbitLine(newPlanetData);
               orbitLines.push(permanentOrbit);
             }
-        
+
             isAddingPlanet = false;
           } else {
+            console.log(event.data);
             
+            if (event.data.intersectedObjectName !== undefined) {
+              console.log(event.data.intersectedObjectName);
+            }
+
             isDragging = true;
             previousMousePosition.x = event.data.mouseX;
             previousMousePosition.y = event.data.mouseY;
           }
           break;
-    
+
         case 'mouseup':
           isDragging = false;
           break;
-    
-          case 'mousemove':
-            if (isDragging) {
-              const deltaX = event.data.mouseX - previousMousePosition.x;
-              const deltaY = event.data.mouseY - previousMousePosition.y;
-              
-              yaw -= deltaX * 0.001;            
-              pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
-      
-              const radius = camera.position.distanceTo(sun.position);
-              const x = radius * Math.cos(pitch) * Math.sin(yaw);
-              const y = radius * Math.sin(pitch);
-              const z = radius * Math.cos(pitch) * Math.cos(yaw);
-      
-              camera.position.set(sun.position.x + x, sun.position.y + y, sun.position.z + z);
-              camera.lookAt(sun.position);
-      
-              previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
-            } else if (isAddingPlanet && previewPlanet) {
-              const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
-              const mouseY = -(event.data.mouseY / canvas.height) * 2 + 1;
-              
-              const vector = new THREE.Vector3(mouseX, mouseY, 0.5);
-              vector.unproject(camera);
-              const dir = vector.sub(camera.position).normalize();
-              const distance = -camera.position.y / dir.y;
-              const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-              
-              previewPlanet.position.copy(pos);
-  
-              if (previewOrbit) scene.remove(previewOrbit);
-              
-              const orbitData: PlanetOrbitData = {
-                semimajorAxis: calculateOrbitDistance(pos),
-                perihelion: calculateOrbitDistance(pos),
-                aphelion: calculateOrbitDistance(pos),
-                eccentricity: 0,
-                color: 0xfff000,
-                axialTilt: 0
-              };
-              
-              if (previewOrbit) scene.remove(previewOrbit);
-              previewOrbit = createOrbitLine(orbitData);
-            }
-            break;
+
+        case 'mousemove':
+          if (isDragging) {
+            const deltaX = event.data.mouseX - previousMousePosition.x;
+            const deltaY = event.data.mouseY - previousMousePosition.y;
+        
+            yaw -= deltaX * 0.001;
+            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
+        
+            const radius = camera.position.distanceTo(targetObject.position);
+            const x = radius * Math.cos(pitch) * Math.sin(yaw);
+            const y = radius * Math.sin(pitch);
+            const z = radius * Math.cos(pitch) * Math.cos(yaw);
+        
+            camera.position.set(
+              targetObject.position.x + x,
+              targetObject.position.y + y,
+              targetObject.position.z + z
+            );
+            camera.lookAt(targetObject.position);
+        
+            previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
+          } else if (isAddingPlanet && previewPlanet) {
+            const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
+            const mouseY = -(event.data.mouseY / canvas.height) * 2 + 1;
+
+            const vector = new THREE.Vector3(mouseX, mouseY, 0.5);
+            vector.unproject(camera);
+            const dir = vector.sub(camera.position).normalize();
+            const distance = -camera.position.y / dir.y;
+            const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+
+            previewPlanet.position.copy(pos);
+
+            if (previewOrbit) scene.remove(previewOrbit);
+
+            const orbitData: PlanetOrbitData = {
+              semimajorAxis: calculateOrbitDistance(pos),
+              perihelion: calculateOrbitDistance(pos),
+              aphelion: calculateOrbitDistance(pos),
+              eccentricity: 0,
+              color: 0xfff000,
+              axialTilt: 0
+            };
+
+            if (previewOrbit) scene.remove(previewOrbit);
+            previewOrbit = createOrbitLine(orbitData);
+          }
+          break;
 
         case 'toggleLines':
           showLines = event.data.showLines;
@@ -586,7 +651,7 @@ insideWorker((event: any) => {
 
         case 'earthData':
           earthData = event.data.earthData as PlanetOrbitData;
-          earthData.color = 0x6b93d6;          
+          earthData.color = 0x6b93d6;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
           earthSpeed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
@@ -639,18 +704,18 @@ insideWorker((event: any) => {
           console.log('Received neptuneData:', neptuneData);
           break;
 
-          case 'startAddingPlanet':
-            isAddingPlanet = true;
-            
-            const previewGeometry = new THREE.SphereGeometry(event.data.planetData.size, 32, 32);
-            const previewMaterial = new THREE.MeshPhongMaterial({ 
-              color: 0xfff000,
-              transparent: true,
-              opacity: 0.7
-            });
-            previewPlanet = new THREE.Mesh(previewGeometry, previewMaterial);
-            scene.add(previewPlanet);
-            break;
+        case 'startAddingPlanet':
+          isAddingPlanet = true;
+
+          const previewGeometry = new THREE.SphereGeometry(event.data.planetData.size, 32, 32);
+          const previewMaterial = new THREE.MeshPhongMaterial({
+            color: 0xfff000,
+            transparent: true,
+            opacity: 0.7
+          });
+          previewPlanet = new THREE.Mesh(previewGeometry, previewMaterial);
+          scene.add(previewPlanet);
+          break;
       }
     };
   }

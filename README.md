@@ -110,24 +110,24 @@ After that you have to implement the following codes
 
 # S3L
 
-- [ ] https://discourse.threejs.org/t/how-to-enable-fps-counter-within-the-three-js-web-editor/33030
-- [ ] terhelés - a háttérben mennyi CPU-t eszik (webworkerben lehet nézni?)
+- [x] https://discourse.threejs.org/t/how-to-enable-fps-counter-within-the-three-js-web-editor/33030
+- [x] terhelés - a háttérben mennyi CPU-t eszik (webworkerben lehet nézni?)
 - [x] Föld object, ami egy ellipszis pályán mozog
 - [x] Összefoglaló a témabejelentőhöz
 - [ ] NASA API vizsgálata
 - [ ] Statikus elliptikus pálya
 - [x] Szakdolgozat leírás módosítása
 - [x] Más API keresése
-- [ ] Árnyék szemben a nappal
+- [x] Árnyék szemben a nappal
 - [x] Textúrák módosítása
 - [x] Vonal a pályán
 - [x] Kapcsoló - eltűnjön a vonal
 - [ ] jelenlegi bolygópozíció lekérése
 - [ ] lensflare
 - [ ] resize canvas reload
-- [ ] GPU-CPU mérés javítása
+- [x] GPU-CPU mérés javítása
 - [ ] Még több user interaction
-- [ ] változtatni a fókuszt más bolygókra
+- [x] változtatni a fókuszt más bolygókra
 - [ ] exobolygók számítása - milyen hőmérséklet lehet rajta, mennyire lehet terraformálni
 - [ ] Ezeknek az optimalizálása
 
