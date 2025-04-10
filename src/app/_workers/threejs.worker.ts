@@ -69,8 +69,7 @@ insideWorker((event: any) => {
     }[] = [];
 
     let customPlanetsIndex = 0;
-    let targetObject: any = sun;
-    let cameraMoveSpeed = 0.1;
+    let targetObject: any;
 
     const ANIMATION_SPEED = 0.0001;
 
@@ -264,6 +263,20 @@ insideWorker((event: any) => {
         planet.mesh.rotation.y += 0.05;
       });
 
+      if (targetObject) {
+        const radius = camera.position.distanceTo(targetObject.position);
+        const x = radius * Math.cos(pitch) * Math.sin(yaw);
+        const y = radius * Math.sin(pitch);
+        const z = radius * Math.cos(pitch) * Math.cos(yaw);
+      
+        camera.position.set(
+          targetObject.position.x + x,
+          targetObject.position.y + y,
+          targetObject.position.z + z
+        );
+        camera.lookAt(targetObject.position);
+      }
+
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
@@ -322,6 +335,7 @@ insideWorker((event: any) => {
       sun.receiveShadow = false;
       sun.name = 'sun';
       scene.add(sun);
+      targetObject = sun;
 
       // TODO: Lensflare hozzáadása
       // const lensflareTexture = new THREE.Texture(lensflareBitmap);
@@ -466,8 +480,8 @@ insideWorker((event: any) => {
 
           if (intersects.length > 0) {
             const intersected = intersects[0].object;
-            if (intersected.name && (intersected.name !== 'sun' || intersected.name.startsWith('newPlanet'))) {
-              console.log('Clicked object:', intersected.name || 'Unnamed');
+            
+            if (intersected.name) {
               targetObject = intersected;
               
               const targetPosition = intersects[0].point;
@@ -480,13 +494,6 @@ insideWorker((event: any) => {
               
               camera.position.copy(newCameraPosition);
               camera.lookAt(targetPosition);
-              
-              // if (controls) { // TODO: here follow camera
-              //   controls.target.copy(targetPosition);
-              //   controls.update();
-              // }
-            } else {
-              // targetObject = sun;
             }
           }
 
