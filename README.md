@@ -131,6 +131,8 @@ After that you have to implement the following codes
 - [ ] exobolygók számítása - milyen hőmérséklet lehet rajta, mennyire lehet terraformálni
 - [ ] Ezeknek az optimalizálása
 
+- [ ] források kigyűjtése
+
 # 2024.11.
 
 

@@ -1,4 +1,3 @@
-import { log } from "console";
 import { PlanetOrbitData } from "./models/objectData";
 
 const insideWorker = require("offscreen-canvas/inside-worker");
@@ -155,7 +154,7 @@ insideWorker((event: any) => {
         { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
         { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
         { name: 'moonBitmap', url: '../assets/textures/moon.jpg' },
-        // { name: 'lensflareBitmap', url: '../assets/textures/lensflare.png' }
+        { name: 'lensflareBitmap', url: '../assets/lensflare.png' }
       ];
 
       const textures: any = {};
@@ -173,6 +172,24 @@ insideWorker((event: any) => {
       }
 
       return textures;
+    }
+
+    function getGlow(bitmap: any, size: number) {
+      const glowTexture = new THREE.Texture(bitmap);
+      glowTexture.needsUpdate = true;
+      
+      const glowMaterial = new THREE.SpriteMaterial({
+        map: glowTexture,
+        color: 0xffffaa,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        opacity: 0.8
+      });
+
+      const glow = new THREE.Sprite(glowMaterial);
+      glow.scale.set(size, size, size);
+
+      return glow;
     }
 
     function animate() {
@@ -337,30 +354,8 @@ insideWorker((event: any) => {
       scene.add(sun);
       targetObject = sun;
 
-      // TODO: Lensflare hozzáadása
-      // const lensflareTexture = new THREE.Texture(lensflareBitmap);
-      // lensflareTexture.needsUpdate = true;
-      // const lensflare = new Lensflare();
-      // lensflare.addElement(new LensflareElement(lensflareTexture, 512, 0));
-      // sun.add(lensflare);
-
-      // const backgroundGeometry = new THREE.SphereGeometry(500, 512, 512);
-
-      // const backgroundTexture = new THREE.Texture(backgroundBitmap);
-      // backgroundTexture.needsUpdate = true;
-
-      // backgroundTexture.minFilter = THREE.LinearMipMapLinearFilter;
-      // backgroundTexture.magFilter = THREE.LinearFilter;
-
-      // backgroundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-      // const backgroundMaterial = new THREE.MeshBasicMaterial({
-      //   map: backgroundTexture,
-      //   side: THREE.BackSide,
-      // });
-
-      // const backgroundSphere = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-      // scene.add(backgroundSphere);
+      // lensflare
+      sun.add(getGlow(lensflareBitmap, 11));
 
       addStars(1000);
 
