@@ -114,22 +114,23 @@ After that you have to implement the following codes
 - [x] terhelés - a háttérben mennyi CPU-t eszik (webworkerben lehet nézni?)
 - [x] Föld object, ami egy ellipszis pályán mozog
 - [x] Összefoglaló a témabejelentőhöz
-- [ ] NASA API vizsgálata
-- [ ] Statikus elliptikus pálya
 - [x] Szakdolgozat leírás módosítása
 - [x] Más API keresése
 - [x] Árnyék szemben a nappal
 - [x] Textúrák módosítása
 - [x] Vonal a pályán
 - [x] Kapcsoló - eltűnjön a vonal
-- [ ] jelenlegi bolygópozíció lekérése
-- [ ] lensflare
-- [ ] resize canvas reload
+- [x] lensflare
 - [x] GPU-CPU mérés javítása
-- [ ] Még több user interaction
 - [x] változtatni a fókuszt más bolygókra
+- [ ] NASA API vizsgálata
+- [ ] Statikus elliptikus pálya
+- [ ] jelenlegi bolygópozíció lekérése
+- [ ] resize canvas reload
+- [ ] Még több user interaction
 - [ ] exobolygók számítása - milyen hőmérséklet lehet rajta, mennyire lehet terraformálni
 - [ ] Ezeknek az optimalizálása
+- [ ] lerp camera moving
 
 - [ ] források kigyűjtése
 

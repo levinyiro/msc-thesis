@@ -70,6 +70,8 @@ insideWorker((event: any) => {
     let customPlanetsIndex = 0;
     let targetObject: any;
 
+    let cameraTargetPosition = new THREE.Vector3().copy(camera.position);
+
     const ANIMATION_SPEED = 0.0001;
 
     function addStars(count: number) {
@@ -281,18 +283,23 @@ insideWorker((event: any) => {
       });
 
       if (targetObject) {
+        const cameraTargetPosition = new THREE.Vector3();
         const radius = camera.position.distanceTo(targetObject.position);
         const x = radius * Math.cos(pitch) * Math.sin(yaw);
         const y = radius * Math.sin(pitch);
         const z = radius * Math.cos(pitch) * Math.cos(yaw);
       
-        camera.position.set(
+        cameraTargetPosition.set(
           targetObject.position.x + x,
           targetObject.position.y + y,
           targetObject.position.z + z
         );
+
+        camera.position.lerp(cameraTargetPosition, 0.05);
         camera.lookAt(targetObject.position);
       }
+      camera.position.lerp(cameraTargetPosition, 0.05);
+
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
@@ -355,7 +362,7 @@ insideWorker((event: any) => {
       targetObject = sun;
 
       // lensflare
-      sun.add(getGlow(lensflareBitmap, 11));
+      sun.add(getGlow(lensflareBitmap, 10));
 
       addStars(1000);
 
@@ -540,12 +547,6 @@ insideWorker((event: any) => {
 
             isAddingPlanet = false;
           } else {
-            console.log(event.data);
-            
-            if (event.data.intersectedObjectName !== undefined) {
-              console.log(event.data.intersectedObjectName);
-            }
-
             isDragging = true;
             previousMousePosition.x = event.data.mouseX;
             previousMousePosition.y = event.data.mouseY;
@@ -569,13 +570,16 @@ insideWorker((event: any) => {
             const y = radius * Math.sin(pitch);
             const z = radius * Math.cos(pitch) * Math.cos(yaw);
         
-            camera.position.set(
+            const cameraTargetPosition = new THREE.Vector3();
+            cameraTargetPosition.set(
               targetObject.position.x + x,
               targetObject.position.y + y,
               targetObject.position.z + z
             );
-            camera.lookAt(targetObject.position);
-        
+
+            camera.position.lerp(cameraTargetPosition, 0.05);
+            camera.lookAt(targetObject.position);        
+            
             previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
           } else if (isAddingPlanet && previewPlanet) {
             const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
@@ -623,14 +627,56 @@ insideWorker((event: any) => {
           }
           break;
 
+          // case 'update_canvas':
+          //   const { rect, devicePixelRatio } = event.data;
+            
+          //   const previousTarget = targetObject?.position.clone() || new THREE.Vector3();
+          //   const previousDistance = camera.position.distanceTo(previousTarget);
+          //   const previousFov = camera.fov;
+            
+          //   canvas.width = Math.floor(rect.width * devicePixelRatio);
+          //   canvas.height = Math.floor(rect.height * devicePixelRatio);
+            
+          //   if (camera && renderer) {
+          //       camera.aspect = rect.width / rect.height;
+                
+          //       camera.fov = previousFov;
+          //       camera.updateProjectionMatrix();
+                
+          //       renderer.setSize(rect.width, rect.height, false);
+          //       renderer.setPixelRatio(devicePixelRatio);
+                
+          //       if (targetObject) {
+          //           const radius = previousDistance;
+          //           const x = radius * Math.cos(pitch) * Math.sin(yaw);
+          //           const y = radius * Math.sin(pitch);
+          //           const z = radius * Math.cos(pitch) * Math.cos(yaw);
+                    
+          //           camera.position.set(
+          //               targetObject.position.x + x,
+          //               targetObject.position.y + y,
+          //               targetObject.position.z + z
+          //           );
+          //           camera.lookAt(targetObject.position);
+                    
+          //           renderer.render(scene, camera);
+          //       }
+          //   }
+          //   break;
+
         case 'keydown':
-          const step = 2;
+          const step = 10;
           const direction = new THREE.Vector3();
           camera.getWorldDirection(direction);
-          if (event.data.key === 'ArrowUp') camera.position.addScaledVector(direction, step);
-          if (event.data.key === 'ArrowDown') camera.position.addScaledVector(direction, -step);
-          // if (event.data.key === 'ArrowLeft') camera.position.x -= step * Math.cos(yaw);
-          // if (event.data.key === 'ArrowRight') camera.position.x += step * Math.cos(yaw);
+        
+          if (event.data.key === 'ArrowUp') {
+            cameraTargetPosition.addScaledVector(direction, step);
+          }
+        
+          if (event.data.key === 'ArrowDown') {
+            cameraTargetPosition.addScaledVector(direction, -step);
+          }
+        
           break;
 
         case 'mercureData':

@@ -222,6 +222,28 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       });
 
+      window.addEventListener('resize', () => {
+        if (this.worker && htmlCanvas) {
+          const rect = htmlCanvas.getBoundingClientRect();
+      
+          this.worker.postMessage({
+            type: 'update_canvas',
+            rect: {
+              left: rect.left,
+              right: rect.right,
+              top: rect.top,
+              bottom: rect.bottom,
+              height: rect.height,
+              width: rect.width,
+            },
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio,
+          });
+        }
+      });
+      
+
       window.addEventListener('keydown', (event: KeyboardEvent) => {
         if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
           this.worker.postMessage({ type: 'keydown', key: event.key });
