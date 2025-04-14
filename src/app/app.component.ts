@@ -168,7 +168,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   
       const finalGpuUsage = ((gpuScore + gpuUsageFromFPS) / 2).toFixed(2);
   
-      this.monitorService.logMetrics(cpuUsage, memoryUsage, fpsValue);
+      this.monitorService.logMetrics(cpuUsage, memoryUsage, fpsValue, Number(finalGpuUsage));
   
       this.memoryUsage = `${memoryUsage} MB`;
       this.cpuUsage = `${cpuUsage.toFixed(2)}%`;

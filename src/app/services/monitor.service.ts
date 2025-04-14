@@ -6,33 +6,32 @@ import { Injectable } from '@angular/core';
 })
 export class MonitorService {
   private readonly STORAGE_KEY = 'performanceMetrics';
-  private maxDataPoints = 60; // Store up to 60 data points (1 minute at 1-second intervals)
+  private maxDataPoints = 60;
 
-  constructor() {}
+  constructor() {
+    this.clearMetrics();
+  }
 
-  logMetrics(cpu: number, memory: number, fps: number): void {
-    // Get existing data or initialize
+  logMetrics(cpu: number, memory: number, fps: number, gpu: number): void {
     const existingData = this.getMetrics();
     
-    // Add new data
     existingData.cpu.push(cpu);
     existingData.memory.push(memory);
     existingData.fps.push(fps);
+    existingData.gpu.push(gpu);
     
-    // Trim arrays if they exceed max length
     if (existingData.cpu.length > this.maxDataPoints) {
       existingData.cpu.shift();
       existingData.memory.shift();
       existingData.fps.shift();
     }
     
-    // Save to localStorage
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingData));
   }
 
-  getMetrics(): { cpu: number[]; memory: number[]; fps: number[] } {
+  getMetrics(): { cpu: number[]; memory: number[]; fps: number[], gpu: number[] } {
     const data = localStorage.getItem(this.STORAGE_KEY);
-    return data ? JSON.parse(data) : { cpu: [], memory: [], fps: [] };
+    return data ? JSON.parse(data) : { cpu: [], memory: [], fps: [], gpu: [] };
   }
 
   clearMetrics(): void {
@@ -46,11 +45,11 @@ export class MonitorService {
       return;
     }
 
-    let csv = 'Timestamp,CPU (GB),Memory (MB),FPS\n';
+    let csv = 'Timestamp,CPU (%),Memory (MB),FPS,GPU (%)\n';
     
     for (let i = 0; i < data.cpu.length; i++) {
       const timestamp = new Date(Date.now() - (data.cpu.length - i - 1) * 1000).toISOString();
-      csv += `${timestamp},${data.cpu[i]},${data.memory[i]},${data.fps[i]}\n`;
+      csv += `${timestamp},${data.cpu[i]},${data.memory[i]},${data.fps[i]},${data.gpu[i] || 'N/A'}\n`;
     }
 
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -62,5 +61,7 @@ export class MonitorService {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+
+    this.clearMetrics();
   }
 }

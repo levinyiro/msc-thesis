@@ -179,7 +179,7 @@ insideWorker((event: any) => {
     function getGlow(bitmap: any, size: number) {
       const glowTexture = new THREE.Texture(bitmap);
       glowTexture.needsUpdate = true;
-      
+
       const glowMaterial = new THREE.SpriteMaterial({
         map: glowTexture,
         color: 0xffffaa,
@@ -282,22 +282,11 @@ insideWorker((event: any) => {
         planet.mesh.rotation.y += 0.05;
       });
 
-      if (targetObject) {
-        const cameraTargetPosition = new THREE.Vector3();
-        const radius = camera.position.distanceTo(targetObject.position);
-        const x = radius * Math.cos(pitch) * Math.sin(yaw);
-        const y = radius * Math.sin(pitch);
-        const z = radius * Math.cos(pitch) * Math.cos(yaw);
-      
-        cameraTargetPosition.set(
-          targetObject.position.x + x,
-          targetObject.position.y + y,
-          targetObject.position.z + z
-        );
 
-        camera.position.lerp(cameraTargetPosition, 0.05);
+      if (targetObject) {
         camera.lookAt(targetObject.position);
       }
+
       camera.position.lerp(cameraTargetPosition, 0.05);
 
 
@@ -482,18 +471,18 @@ insideWorker((event: any) => {
 
           if (intersects.length > 0) {
             const intersected = intersects[0].object;
-            
+
             if (intersected.name) {
               targetObject = intersected;
-              
+
               const targetPosition = intersects[0].point;
               const direction = new THREE.Vector3()
                 .subVectors(camera.position, targetPosition)
                 .normalize();
-              
+
               const distance = 10;
               const newCameraPosition = targetPosition.clone().addScaledVector(direction, distance);
-              
+
               camera.position.copy(newCameraPosition);
               camera.lookAt(targetPosition);
             }
@@ -561,24 +550,20 @@ insideWorker((event: any) => {
           if (isDragging) {
             const deltaX = event.data.mouseX - previousMousePosition.x;
             const deltaY = event.data.mouseY - previousMousePosition.y;
-        
-            yaw -= deltaX * 0.001;
-            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.001));
-        
+            
+            yaw -= deltaX * 0.002;
+            pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch - deltaY * 0.002));
+            
             const radius = camera.position.distanceTo(targetObject.position);
             const x = radius * Math.cos(pitch) * Math.sin(yaw);
             const y = radius * Math.sin(pitch);
             const z = radius * Math.cos(pitch) * Math.cos(yaw);
-        
-            const cameraTargetPosition = new THREE.Vector3();
+            
             cameraTargetPosition.set(
               targetObject.position.x + x,
-              targetObject.position.y + y,
+              targetObject.position.y + y, 
               targetObject.position.z + z
             );
-
-            camera.position.lerp(cameraTargetPosition, 0.05);
-            camera.lookAt(targetObject.position);        
             
             previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
           } else if (isAddingPlanet && previewPlanet) {
@@ -627,56 +612,56 @@ insideWorker((event: any) => {
           }
           break;
 
-          // case 'update_canvas':
-          //   const { rect, devicePixelRatio } = event.data;
-            
-          //   const previousTarget = targetObject?.position.clone() || new THREE.Vector3();
-          //   const previousDistance = camera.position.distanceTo(previousTarget);
-          //   const previousFov = camera.fov;
-            
-          //   canvas.width = Math.floor(rect.width * devicePixelRatio);
-          //   canvas.height = Math.floor(rect.height * devicePixelRatio);
-            
-          //   if (camera && renderer) {
-          //       camera.aspect = rect.width / rect.height;
-                
-          //       camera.fov = previousFov;
-          //       camera.updateProjectionMatrix();
-                
-          //       renderer.setSize(rect.width, rect.height, false);
-          //       renderer.setPixelRatio(devicePixelRatio);
-                
-          //       if (targetObject) {
-          //           const radius = previousDistance;
-          //           const x = radius * Math.cos(pitch) * Math.sin(yaw);
-          //           const y = radius * Math.sin(pitch);
-          //           const z = radius * Math.cos(pitch) * Math.cos(yaw);
-                    
-          //           camera.position.set(
-          //               targetObject.position.x + x,
-          //               targetObject.position.y + y,
-          //               targetObject.position.z + z
-          //           );
-          //           camera.lookAt(targetObject.position);
-                    
-          //           renderer.render(scene, camera);
-          //       }
-          //   }
-          //   break;
+        // case 'update_canvas':
+        //   const { rect, devicePixelRatio } = event.data;
+
+        //   const previousTarget = targetObject?.position.clone() || new THREE.Vector3();
+        //   const previousDistance = camera.position.distanceTo(previousTarget);
+        //   const previousFov = camera.fov;
+
+        //   canvas.width = Math.floor(rect.width * devicePixelRatio);
+        //   canvas.height = Math.floor(rect.height * devicePixelRatio);
+
+        //   if (camera && renderer) {
+        //       camera.aspect = rect.width / rect.height;
+
+        //       camera.fov = previousFov;
+        //       camera.updateProjectionMatrix();
+
+        //       renderer.setSize(rect.width, rect.height, false);
+        //       renderer.setPixelRatio(devicePixelRatio);
+
+        //       if (targetObject) {
+        //           const radius = previousDistance;
+        //           const x = radius * Math.cos(pitch) * Math.sin(yaw);
+        //           const y = radius * Math.sin(pitch);
+        //           const z = radius * Math.cos(pitch) * Math.cos(yaw);
+
+        //           camera.position.set(
+        //               targetObject.position.x + x,
+        //               targetObject.position.y + y,
+        //               targetObject.position.z + z
+        //           );
+        //           camera.lookAt(targetObject.position);
+
+        //           renderer.render(scene, camera);
+        //       }
+        //   }
+        //   break;
 
         case 'keydown':
-          const step = 10;
+          const step = 2;
           const direction = new THREE.Vector3();
           camera.getWorldDirection(direction);
-        
+
           if (event.data.key === 'ArrowUp') {
             cameraTargetPosition.addScaledVector(direction, step);
           }
-        
+
           if (event.data.key === 'ArrowDown') {
             cameraTargetPosition.addScaledVector(direction, -step);
           }
-        
+
           break;
 
         case 'mercureData':
