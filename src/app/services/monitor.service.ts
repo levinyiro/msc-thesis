@@ -48,7 +48,7 @@ export class MonitorService {
     let csv = 'Timestamp,CPU (%),Memory (MB),FPS,GPU (%)\n';
     
     for (let i = 0; i < data.cpu.length; i++) {
-      const timestamp = new Date(Date.now() - (data.cpu.length - i - 1) * 1000).toISOString();
+      const timestamp = i + 1;
       csv += `${timestamp},${data.cpu[i]},${data.memory[i]},${data.fps[i]},${data.gpu[i] || 'N/A'}\n`;
     }
 
