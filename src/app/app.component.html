@@ -10,7 +10,24 @@
       <button class="btn btn-sm btn-primary mt-2" (click)="exportMetricsToCSV()">Export Metrics</button><br />
       <button (click)="startAddingPlanet()" [disabled]="isAddingPlanet" class="btn btn-primary btn-sm mt-2">
         {{ isAddingPlanet ? 'Click to Place Planet' : 'Add New Planet' }}
+      </button><br />
+
+      <button (click)="toggleShowPlanetsList()" class="btn btn-primary btn-sm mt-2">
+        {{ showPlanetsList ? 'Hide Planets List' : 'Show Planets List' }}
       </button>
+    </div>
+
+    <div class="planet-list" *ngIf="showPlanetsList">
+      <div *ngFor="let planet of planets" class="planet-item row mt-2">
+        <div class="col-6">
+          {{planet.englishName}}
+        </div>
+        <div class="col-6">
+          <button *ngIf="planet.name !== 'sun'" (click)="deletePlanet(planet)" class="btn btn-sm btn-danger">
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
 </div>
 <canvas id="canvas"></canvas>

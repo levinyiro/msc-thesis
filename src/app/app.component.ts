@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from './services/data.service';
 import { MonitorService } from './services/monitor.service';
+import { PlanetOrbitData } from './_workers/models/objectData';
 
 @Component({
   selector: 'app-root',
@@ -30,6 +31,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   isAddingPlanet = false;
   newPlanetData: any = {};
 
+  planets: PlanetOrbitData[] = [];
+  showPlanetsList: boolean = false;
+
   constructor(private dataService: DataService, private monitorService: MonitorService) { }
 
   ngOnInit() {
@@ -40,6 +44,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getMercureData().subscribe(data => {
       this.mercureData = data;
       if (this.worker) {
+        this.planets.push(this.mercureData);
         this.worker.postMessage({ type: 'mercureData', mercureData: data });
       }
     });
@@ -47,6 +52,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getVenusData().subscribe(data => {
       this.venusData = data;
       if (this.worker) {
+        this.planets.push(this.venusData);
         this.worker.postMessage({ type: 'venusData', venusData: data });
       }
     });
@@ -54,6 +60,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getEarthData().subscribe(data => {
       this.earthData = data;
       if (this.worker) {
+        this.planets.push(this.earthData);
         this.worker.postMessage({ type: 'earthData', earthData: data });
       }
     });
@@ -61,6 +68,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getMarsData().subscribe(data => {
       this.marsData = data;
       if (this.worker) {
+        this.planets.push(this.marsData);
         this.worker.postMessage({ type: 'marsData', marsData: data });
       }
     });
@@ -68,6 +76,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getJupiterData().subscribe(data => {
       this.jupiterData = data;
       if (this.worker) {
+        this.planets.push(this.jupiterData);
         this.worker.postMessage({ type: 'jupiterData', jupiterData: data });
       }
     });
@@ -75,6 +84,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getSaturnData().subscribe(data => {
       this.saturnData = data;
       if (this.worker) {
+        this.planets.push(this.saturnData);
         this.worker.postMessage({ type: 'saturnData', saturnData: data });
       }
     });
@@ -82,6 +92,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getUranusData().subscribe(data => {
       this.uranusData = data;
       if (this.worker) {
+        this.planets.push(this.uranusData);
         this.worker.postMessage({ type: 'uranusData', uranusData: data });
       }
     });
@@ -89,6 +100,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dataService.getNeptuneData().subscribe(data => {
       this.neptuneData = data;
       if (this.worker) {
+        this.planets.push(this.neptuneData);
         this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
       }
     });
@@ -239,7 +251,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       });
       
-
       window.addEventListener('keydown', (event: KeyboardEvent) => {
         if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
           this.worker.postMessage({ type: 'keydown', key: event.key });
@@ -321,6 +332,20 @@ export class AppComponent implements OnInit, AfterViewInit {
   
   private getRandomColor(): number {
     return Math.floor(Math.random() * 0xffffff);
+  }
+
+  deletePlanet(planet: PlanetOrbitData) {
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'deletePlanet',
+        planetName: planet.name
+      });
+    }
+    this.planets = this.planets.filter(p => p !== planet);
+  }
+
+  toggleShowPlanetsList() {
+    this.showPlanetsList = !this.showPlanetsList;
   }
 
   ngOnDestroy() {
