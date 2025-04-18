@@ -60,14 +60,8 @@ insideWorker((event: any) => {
     let isAddingPlanet = false;
     let previewPlanet: any | null = null;
     let previewOrbit: any | null = null;
-    const customPlanets: {
-      mesh: any;
-      angle: number;
-      speed: number;
-      data: Planet;
-    }[] = [];
+    const customPlanets: Planet[] = [];
 
-    let customPlanetsIndex = 0;
     let targetObject: any;
 
     let cameraTargetPosition = new THREE.Vector3().copy(camera.position);
@@ -112,7 +106,7 @@ insideWorker((event: any) => {
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: data.color });
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
       orbitPath.rotation.x = Math.PI / 2;
-      orbitPath.name = data.englishName + 'Orbit';      
+      orbitPath.name = data.englishName?.toLowerCase().replace(' ', '') + 'Orbit';
 
       scene.add(orbitPath);
       orbitLines.push(orbitPath);
@@ -277,9 +271,9 @@ insideWorker((event: any) => {
 
       customPlanets.forEach(planet => {
         planet.angle += planet.speed;
-        const orbitRadius = planet.data.semimajorAxis! / distanceDivider;
-        planet.mesh.position.x = Math.sin(planet.angle) * orbitRadius;
-        planet.mesh.position.z = Math.cos(planet.angle) * orbitRadius;
+        const orbitRadius = planet.semimajorAxis! / distanceDivider;
+        planet.mesh.position.x = Math.sin(planet.angle!) * orbitRadius;
+        planet.mesh.position.z = Math.cos(planet.angle!) * orbitRadius;
         planet.mesh.rotation.y += 0.05;
       });
 
@@ -306,6 +300,7 @@ insideWorker((event: any) => {
       planet.rotation.z = getAxialTilt(data.axialTilt || 0);
       planet.castShadow = true;
       planet.receiveShadow = true;
+      planet.name = data.englishName?.toLowerCase().replace(' ', '');
 
       return planet;
     }
@@ -465,23 +460,23 @@ insideWorker((event: any) => {
             (mouseX / canvasWidth) * 2 - 1,
             -(mouseY / canvasHeight) * 2 + 1
           );
-        
+
           raycaster.setFromCamera(mouse, camera);
           const intersects = raycaster.intersectObjects(scene.children, true);
-        
+
           if (intersects.length > 0) {
             const intersected = intersects[0].object;
-        
+
             if (intersected.name) {
               const currentDistance = camera.position.distanceTo(targetObject.position);
               targetObject = intersected;
               const direction = new THREE.Vector3()
                 .subVectors(camera.position, targetObject.position)
                 .normalize();
-              
+
               const newCameraPosition = targetObject.position.clone()
                 .addScaledVector(direction, currentDistance);
-              
+
               cameraTargetPosition.copy(newCameraPosition);
             }
           }
@@ -492,31 +487,31 @@ insideWorker((event: any) => {
             const position = previewPlanet?.position.clone() ?? new THREE.Vector3(10, 0, 0);
             const orbitDistance = calculateOrbitDistance(position);
 
-            const colorNum = typeof planetData.color === 'string'
+            planetData.color = typeof planetData.color === 'string'
               ? parseInt(planetData.color.replace('#', '0x'))
-              : 0xfff000;
+              : typeof planetData.color === 'number'
+                ? planetData.color
+                : 0xfff000;
 
-            const newPlanetData: Planet = {
-              semimajorAxis: orbitDistance,
-              perihelion: orbitDistance,
-              aphelion: orbitDistance,
-              eccentricity: 0,
-              color: colorNum,
-              axialTilt: planetData.axialTilt ?? 0,
-              size: planetData.size ?? 0.3,
-              mass: { massValue: 1, massExponent: 24 }
+            planetData.semimajorAxis = orbitDistance;
+            planetData.perihelion = orbitDistance;
+            planetData.aphelion = orbitDistance;
+            planetData.eccentricity ??= 0;
+            planetData.axialTilt ??= 0;
+            planetData.size ??= 0.3;
+            planetData.mass = {
+              massValue: 1,
+              massExponent: 24
             };
 
-            const newPlanet = createNewPlanet(newPlanetData, position);
-            newPlanet.name = 'newPlanet' + ++customPlanetsIndex;
+            planetData.angle = Math.atan2(position.z, position.x);
+            planetData.speed = calculateSpeedFromVolatility(planetData, ANIMATION_SPEED);
+
+            const newPlanet = createNewPlanet(planetData, position);
             scene.add(newPlanet);
 
-            customPlanets.push({
-              mesh: newPlanet,
-              angle: Math.atan2(position.z, position.x),
-              speed: calculateSpeedFromVolatility(newPlanetData, ANIMATION_SPEED),
-              data: newPlanetData
-            });
+            planetData.mesh = newPlanet;
+            customPlanets.push(planetData);
 
             if (previewPlanet) {
               scene.remove(previewPlanet);
@@ -528,7 +523,9 @@ insideWorker((event: any) => {
             }
 
             if (showLines) {
-              const permanentOrbit = createOrbitLine(newPlanetData);
+              const permanentOrbit = createOrbitLine(planetData);
+              permanentOrbit.name = planetData.englishName.toLowerCase().replace(' ', '') + 'Orbit';
+
               orbitLines.push(permanentOrbit);
             }
 
@@ -741,16 +738,16 @@ insideWorker((event: any) => {
           break;
 
         case 'deletePlanet':
-          const planetName = event.data.planetName.toLowerCase();
-          const orbitName = planetName.charAt(0).toUpperCase() + planetName.slice(1) + 'Orbit';
-        
+          const planetName = event.data.planetName.toLowerCase().replace(' ', '');
+          const orbitName = planetName + 'Orbit';
+
           const deleteObjectByName = (name: string) => {
             const object = scene.getObjectByName(name);
             if (object) {
               scene.remove(object);
-        
+
               if ((object as any).geometry) (object as any).geometry.dispose();
-        
+
               const material = (object as any).material;
               if (Array.isArray(material)) {
                 material.forEach(m => {
@@ -761,21 +758,17 @@ insideWorker((event: any) => {
                 if ((material as any).map) (material as any).map.dispose();
                 material.dispose();
               }
-        
-              console.log(`Deleted: ${name}`);
-            } else {
-              console.warn(`Not found: ${name}`);
             }
           };
-        
+
           deleteObjectByName(planetName);
           deleteObjectByName(orbitName);
-        
+
           if (planetName === 'earth') {
             deleteObjectByName('moon');
-          }        
+          }
 
-        break;
+          break;
       }
     };
   }

@@ -314,13 +314,15 @@ export class AppComponent implements OnInit, AfterViewInit {
   startAddingPlanet() {
     this.isAddingPlanet = true;
     this.newPlanetData = {
-      name: `Planet ${Math.floor(Math.random() * 1000)}`,
+      englishName: `Planet ${Math.floor(Math.random() * 1000)}`,
       color: this.getRandomColor().toString(),
       size: 0.2 + Math.random() * 0.5,
       semimajorAxis: 0,
       eccentricity: 0,
-      axialTilt: Math.random() * 30
+      axialTilt: Math.random() * 30,
     };
+
+    this.planets.push(this.newPlanetData);
     
     if (this.worker) {
       this.worker.postMessage({ 

@@ -8,6 +8,9 @@ export interface Planet {
     axialTilt?: number;
     size?: number;
     semimajorAxis?: number;
+    speed?: any;
+    mesh?: any;
+    angle?: number;
     mass?: {
       massValue: number;
       massExponent: number;
