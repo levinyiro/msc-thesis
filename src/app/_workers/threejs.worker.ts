@@ -290,7 +290,6 @@ insideWorker((event: any) => {
 
       camera.position.lerp(cameraTargetPosition, 0.05);
 
-
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
@@ -466,26 +465,24 @@ insideWorker((event: any) => {
             (mouseX / canvasWidth) * 2 - 1,
             -(mouseY / canvasHeight) * 2 + 1
           );
-
+        
           raycaster.setFromCamera(mouse, camera);
           const intersects = raycaster.intersectObjects(scene.children, true);
-
+        
           if (intersects.length > 0) {
             const intersected = intersects[0].object;
-
+        
             if (intersected.name) {
+              const currentDistance = camera.position.distanceTo(targetObject.position);
               targetObject = intersected;
-
-              const targetPosition = intersects[0].point;
               const direction = new THREE.Vector3()
-                .subVectors(camera.position, targetPosition)
+                .subVectors(camera.position, targetObject.position)
                 .normalize();
-
-              const distance = 10;
-              const newCameraPosition = targetPosition.clone().addScaledVector(direction, distance);
-
-              camera.position.copy(newCameraPosition);
-              camera.lookAt(targetPosition);
+              
+              const newCameraPosition = targetObject.position.clone()
+                .addScaledVector(direction, currentDistance);
+              
+              cameraTargetPosition.copy(newCameraPosition);
             }
           }
 
