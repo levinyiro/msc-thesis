@@ -10,8 +10,8 @@ export class DataService {
 
     constructor(private http: HttpClient) {}
   
-    getMercureData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/mercure');
+    getMercuryData(): Observable<any> {
+      return this.http.get<any>(this.apiUrl + '/mercury');
     }
 
     getVenusData(): Observable<any> {

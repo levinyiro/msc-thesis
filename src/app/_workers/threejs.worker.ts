@@ -1,4 +1,4 @@
-import { PlanetOrbitData } from "./models/objectData";
+import { Planet } from "./models/planet";
 
 const insideWorker = require("offscreen-canvas/inside-worker");
 const THREE = require('three');
@@ -20,11 +20,11 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercure: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
-    let earthData: any, mercureData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
+    let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
+    let earthData: any, mercuryData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
 
     let earthAngle = 0;
-    let mercureAngle = 0;
+    let mercuryAngle = 0;
     let venusAngle = 0;
     let marsAngle = 0;
     let jupiterAngle = 0;
@@ -37,7 +37,7 @@ insideWorker((event: any) => {
     let previousMousePosition = { x: 0, y: 0 };
     let yaw = 0, pitch = 0;
     let earthSpeed: number;
-    let mercureSpeed: number;
+    let mercurySpeed: number;
     let venusSpeed: number;
     let moonSpeed: number;
     let marsSpeed: number;
@@ -64,7 +64,7 @@ insideWorker((event: any) => {
       mesh: any;
       angle: number;
       speed: number;
-      data: PlanetOrbitData;
+      data: Planet;
     }[] = [];
 
     let customPlanetsIndex = 0;
@@ -93,7 +93,7 @@ insideWorker((event: any) => {
       }
     }
 
-    function createOrbitLine(data: PlanetOrbitData): any {
+    function createOrbitLine(data: Planet): any {
       if (!data) return null;
 
       const perihelion = data.perihelion / distanceDivider;
@@ -112,6 +112,7 @@ insideWorker((event: any) => {
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: data.color });
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
       orbitPath.rotation.x = Math.PI / 2;
+      orbitPath.name = data.englishName + 'Orbit';      
 
       scene.add(orbitPath);
       orbitLines.push(orbitPath);
@@ -136,7 +137,7 @@ insideWorker((event: any) => {
     if (showLines) {
       createOrbitLine(earthData);
       createOrbitLine(venusData);
-      createOrbitLine(mercureData);
+      createOrbitLine(mercuryData);
       createOrbitLine(marsData);
       createOrbitLine(jupiterData);
       createOrbitLine(saturnData);
@@ -148,7 +149,7 @@ insideWorker((event: any) => {
       const textureUrls = [
         { name: 'sunBitmap', url: '../assets/textures/sun.jpg' },
         { name: 'earthBitmap', url: '../assets/textures/earth.jpg' },
-        { name: 'mercureBitmap', url: '../assets/textures/mercure.jpg' },
+        { name: 'mercuryBitmap', url: '../assets/textures/mercury.jpg' },
         { name: 'venusBitmap', url: '../assets/textures/venus.jpg' },
         { name: 'marsBitmap', url: '../assets/textures/mars.jpg' },
         { name: 'jupiterBitmap', url: '../assets/textures/jupiter.jpg' },
@@ -208,11 +209,11 @@ insideWorker((event: any) => {
         earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
       }
 
-      if (mercure) {
-        mercureAngle += mercureSpeed;
-        mercure.rotation.y += 0.05;
-        mercure.position.x = Math.sin(mercureAngle) * (mercureData ? mercureData.semimajorAxis / distanceDivider : 8);
-        mercure.position.z = Math.cos(mercureAngle) * (mercureData ? mercureData.semimajorAxis / distanceDivider : 8);
+      if (mercury) {
+        mercuryAngle += mercurySpeed;
+        mercury.rotation.y += 0.05;
+        mercury.position.x = Math.sin(mercuryAngle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
+        mercury.position.z = Math.cos(mercuryAngle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
       }
 
       if (venus) {
@@ -294,7 +295,7 @@ insideWorker((event: any) => {
       requestAnimationFrame(animate);
     }
 
-    function createNewPlanet(data: PlanetOrbitData, position: any): any {
+    function createNewPlanet(data: Planet, position: any): any {
       const geometry = new THREE.SphereGeometry(data.size || 0.3, 32, 32);
 
       const material = new THREE.MeshPhongMaterial({
@@ -315,7 +316,7 @@ insideWorker((event: any) => {
     }
 
     loadTextures().then(textures => {
-      const { sunBitmap, earthBitmap, mercureBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
+      const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
       sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
       sunSpotLight.castShadow = true;
@@ -385,14 +386,14 @@ insideWorker((event: any) => {
       moon.name = 'moon';
       scene.add(moon);
 
-      const mercureTexture = new THREE.Texture(mercureBitmap);
-      mercureTexture.needsUpdate = true;
-      const mercureGeometry = new THREE.SphereGeometry(0.3, 32, 32);
-      const mercureMaterial = new THREE.MeshPhongMaterial({ map: mercureTexture });
-      mercure = new THREE.Mesh(mercureGeometry, mercureMaterial);
-      mercure.rotation.z = getAxialTilt(mercureData?.axialTilt);
-      mercure.name = 'mercure';
-      scene.add(mercure);
+      const mercuryTexture = new THREE.Texture(mercuryBitmap);
+      mercuryTexture.needsUpdate = true;
+      const mercuryGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+      const mercuryMaterial = new THREE.MeshPhongMaterial({ map: mercuryTexture });
+      mercury = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
+      mercury.rotation.z = getAxialTilt(mercuryData?.axialTilt);
+      mercury.name = 'mercury';
+      scene.add(mercury);
 
       const venusTexture = new THREE.Texture(venusBitmap);
       venusTexture.needsUpdate = true;
@@ -498,7 +499,7 @@ insideWorker((event: any) => {
               ? parseInt(planetData.color.replace('#', '0x'))
               : 0xfff000;
 
-            const newPlanetData: PlanetOrbitData = {
+            const newPlanetData: Planet = {
               semimajorAxis: orbitDistance,
               perihelion: orbitDistance,
               aphelion: orbitDistance,
@@ -550,21 +551,21 @@ insideWorker((event: any) => {
           if (isDragging) {
             const deltaX = event.data.mouseX - previousMousePosition.x;
             const deltaY = event.data.mouseY - previousMousePosition.y;
-            
+
             yaw -= deltaX * 0.002;
-            pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch - deltaY * 0.002));
-            
+            pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch - deltaY * 0.002));
+
             const radius = camera.position.distanceTo(targetObject.position);
             const x = radius * Math.cos(pitch) * Math.sin(yaw);
             const y = radius * Math.sin(pitch);
             const z = radius * Math.cos(pitch) * Math.cos(yaw);
-            
+
             cameraTargetPosition.set(
               targetObject.position.x + x,
-              targetObject.position.y + y, 
+              targetObject.position.y + y,
               targetObject.position.z + z
             );
-            
+
             previousMousePosition = { x: event.data.mouseX, y: event.data.mouseY };
           } else if (isAddingPlanet && previewPlanet) {
             const mouseX = (event.data.mouseX / canvas.width) * 2 - 1;
@@ -580,7 +581,7 @@ insideWorker((event: any) => {
 
             if (previewOrbit) scene.remove(previewOrbit);
 
-            const orbitData: PlanetOrbitData = {
+            const orbitData: Planet = {
               semimajorAxis: calculateOrbitDistance(pos),
               perihelion: calculateOrbitDistance(pos),
               aphelion: calculateOrbitDistance(pos),
@@ -603,7 +604,7 @@ insideWorker((event: any) => {
           if (showLines) {
             if (earthData) createOrbitLine(earthData);
             if (venusData) createOrbitLine(venusData);
-            if (mercureData) createOrbitLine(mercureData);
+            if (mercuryData) createOrbitLine(mercuryData);
             if (marsData) createOrbitLine(marsData);
             if (jupiterData) createOrbitLine(jupiterData);
             if (saturnData) createOrbitLine(saturnData);
@@ -664,77 +665,69 @@ insideWorker((event: any) => {
 
           break;
 
-        case 'mercureData':
-          mercureData = event.data.mercureData as PlanetOrbitData;
-          mercureData.color = 0xe7e8ec;
+        case 'mercuryData':
+          mercuryData = event.data.mercuryData as Planet;
+          mercuryData.color = 0xe7e8ec;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(mercureData);
-          mercureSpeed = calculateSpeedFromVolatility(mercureData, ANIMATION_SPEED);
-          console.log('Received mercureData:', mercureData);
+          createOrbitLine(mercuryData);
+          mercurySpeed = calculateSpeedFromVolatility(mercuryData, ANIMATION_SPEED);
           break;
 
         case 'venusData':
-          venusData = event.data.venusData as PlanetOrbitData;
+          venusData = event.data.venusData as Planet;
           venusData.color = 0xeecb8b;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(venusData);
           venusSpeed = calculateSpeedFromVolatility(venusData, ANIMATION_SPEED);
-          console.log('Received venusData:', venusData);
           break;
 
         case 'earthData':
-          earthData = event.data.earthData as PlanetOrbitData;
+          earthData = event.data.earthData as Planet;
           earthData.color = 0x6b93d6;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
           earthSpeed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
           moonSpeed = 0.005;
-          console.log('Received earthData:', earthData);
           break;
 
         case 'marsData':
-          marsData = event.data.marsData as PlanetOrbitData;
+          marsData = event.data.marsData as Planet;
           marsData.color = 0x993d00;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(marsData);
           marsSpeed = calculateSpeedFromVolatility(marsData, ANIMATION_SPEED);
-          console.log('Received marsData:', marsData);
           break;
 
         case 'jupiterData':
-          jupiterData = event.data.jupiterData as PlanetOrbitData;
+          jupiterData = event.data.jupiterData as Planet;
           jupiterData.color = 0xb07f35;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(jupiterData);
           jupiterSpeed = calculateSpeedFromVolatility(jupiterData, ANIMATION_SPEED);
-          console.log('Received jupiterData:', jupiterData);
           break;
 
         case 'saturnData':
-          saturnData = event.data.saturnData as PlanetOrbitData;
+          saturnData = event.data.saturnData as Planet;
           saturnData.color = 0xb08f36;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(saturnData);
           saturnSpeed = calculateSpeedFromVolatility(saturnData, ANIMATION_SPEED);
-          console.log('Received saturnData:', saturnData);
           break;
 
         case 'uranusData':
-          uranusData = event.data.uranusData as PlanetOrbitData;
+          uranusData = event.data.uranusData as Planet;
           uranusData.color = 0x5580aa;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(uranusData);
           uranusSpeed = calculateSpeedFromVolatility(uranusData, ANIMATION_SPEED);
-          console.log('Received uranusData:', uranusData);
           break;
 
         case 'neptuneData':
-          neptuneData = event.data.neptuneData as PlanetOrbitData;
+          neptuneData = event.data.neptuneData as Planet;
           neptuneData.color = 0x366896;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(neptuneData);
           neptuneSpeed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
-          console.log('Received neptuneData:', neptuneData);
           break;
 
         case 'startAddingPlanet':
@@ -749,6 +742,43 @@ insideWorker((event: any) => {
           previewPlanet = new THREE.Mesh(previewGeometry, previewMaterial);
           scene.add(previewPlanet);
           break;
+
+        case 'deletePlanet':
+          const planetName = event.data.planetName.toLowerCase();
+          const orbitName = planetName.charAt(0).toUpperCase() + planetName.slice(1) + 'Orbit';
+        
+          const deleteObjectByName = (name: string) => {
+            const object = scene.getObjectByName(name);
+            if (object) {
+              scene.remove(object);
+        
+              if ((object as any).geometry) (object as any).geometry.dispose();
+        
+              const material = (object as any).material;
+              if (Array.isArray(material)) {
+                material.forEach(m => {
+                  if ((m as any).map) (m as any).map.dispose();
+                  m.dispose();
+                });
+              } else if (material) {
+                if ((material as any).map) (material as any).map.dispose();
+                material.dispose();
+              }
+        
+              console.log(`Deleted: ${name}`);
+            } else {
+              console.warn(`Not found: ${name}`);
+            }
+          };
+        
+          deleteObjectByName(planetName);
+          deleteObjectByName(orbitName);
+        
+          if (planetName === 'earth') {
+            deleteObjectByName('moon');
+          }        
+
+        break;
       }
     };
   }

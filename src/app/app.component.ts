@@ -1,7 +1,7 @@
 import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from './services/data.service';
 import { MonitorService } from './services/monitor.service';
-import { PlanetOrbitData } from './_workers/models/objectData';
+import { Planet } from './_workers/models/planet';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +14,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   loggingInterval: any;
   canvas?: OffscreenCanvas;
   @ViewChild('inputShowLine') inputShowLine!: ElementRef<HTMLInputElement>;
-  mercureData: any;
+  mercuryData: any;
   venusData: any;
   earthData: any;
   marsData: any;
@@ -31,7 +31,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   isAddingPlanet = false;
   newPlanetData: any = {};
 
-  planets: PlanetOrbitData[] = [];
+  planets: Planet[] = [];
   showPlanetsList: boolean = false;
 
   constructor(private dataService: DataService, private monitorService: MonitorService) { }
@@ -41,11 +41,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.monitorSystemStats();
 
-    this.dataService.getMercureData().subscribe(data => {
-      this.mercureData = data;
+    this.dataService.getMercuryData().subscribe(data => {
+      this.mercuryData = data;
       if (this.worker) {
-        this.planets.push(this.mercureData);
-        this.worker.postMessage({ type: 'mercureData', mercureData: data });
+        this.planets.push(this.mercuryData);
+        this.worker.postMessage({ type: 'mercuryData', mercuryData: data });
       }
     });
     
@@ -267,8 +267,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       });
 
-      if (this.mercureData) {
-        this.worker.postMessage({ type: 'mercureData', mercureData: this.mercureData });
+      if (this.mercuryData) {
+        this.worker.postMessage({ type: 'mercuryData', mercuryData: this.mercuryData });
       }
 
       if (this.venusData) {
@@ -334,11 +334,11 @@ export class AppComponent implements OnInit, AfterViewInit {
     return Math.floor(Math.random() * 0xffffff);
   }
 
-  deletePlanet(planet: PlanetOrbitData) {
+  deletePlanet(planet: Planet) {
     if (this.worker) {
       this.worker.postMessage({
         type: 'deletePlanet',
-        planetName: planet.name
+        planetName: planet.englishName
       });
     }
     this.planets = this.planets.filter(p => p !== planet);

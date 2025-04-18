@@ -1,5 +1,6 @@
-export interface PlanetOrbitData {
+export interface Planet {
     name?: string;
+    englishName?: string;
     perihelion: number;
     aphelion: number;
     eccentricity: number;
