@@ -49,7 +49,7 @@ insideWorker((event: any) => {
     let moon: any;
     let moonAngle = 0;
     const moonDistance = 2;
-    const distanceDivider = 5000000;
+    const distanceDivider = 3000000;
 
     // fps counting
     let frameCount = 0;
@@ -498,20 +498,20 @@ insideWorker((event: any) => {
           const intersects = raycaster.intersectObjects(scene.children, true);
 
           if (intersects.length > 0) {
-            const intersected = intersects[0].object;
-
-            if (intersected.name) {
-              const currentDistance = camera.position.distanceTo(targetObject.position);
-              targetObject = intersected;
-              const direction = new THREE.Vector3()
-                .subVectors(camera.position, targetObject.position)
-                .normalize();
-
-              const newCameraPosition = targetObject.position.clone()
-                .addScaledVector(direction, currentDistance);
-
-              cameraTargetPosition.copy(newCameraPosition);
-            }
+              const intersected = intersects[0].object;
+      
+              if (!intersected.name.includes('Orbit')) {
+                  const currentDistance = camera.position.distanceTo(targetObject.position);
+                  targetObject = intersected;
+                  const direction = new THREE.Vector3()
+                      .subVectors(camera.position, targetObject.position)
+                      .normalize();
+      
+                  const newCameraPosition = targetObject.position.clone()
+                      .addScaledVector(direction, currentDistance);
+      
+                  cameraTargetPosition.copy(newCameraPosition);
+              }
           }
 
           if (isAddingPlanet) {
