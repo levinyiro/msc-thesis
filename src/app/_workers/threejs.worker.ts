@@ -321,6 +321,19 @@ insideWorker((event: any) => {
       return position.distanceTo(sun.position) * distanceDivider;
     }
 
+    function changeTargetPlanet(intersected: string) {
+      const currentDistance = camera.position.distanceTo(targetObject.position);
+      targetObject = intersected;
+      const direction = new THREE.Vector3()
+          .subVectors(camera.position, targetObject.position)
+          .normalize();
+
+      const newCameraPosition = targetObject.position.clone()
+          .addScaledVector(direction, currentDistance);
+
+      cameraTargetPosition.copy(newCameraPosition);
+    }
+
     loadTextures().then(textures => {
       const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
@@ -501,16 +514,7 @@ insideWorker((event: any) => {
               const intersected = intersects[0].object;
       
               if (!intersected.name.includes('Orbit')) {
-                  const currentDistance = camera.position.distanceTo(targetObject.position);
-                  targetObject = intersected;
-                  const direction = new THREE.Vector3()
-                      .subVectors(camera.position, targetObject.position)
-                      .normalize();
-      
-                  const newCameraPosition = targetObject.position.clone()
-                      .addScaledVector(direction, currentDistance);
-      
-                  cameraTargetPosition.copy(newCameraPosition);
+                changeTargetPlanet(intersected);
               }
           }
 
@@ -778,6 +782,10 @@ insideWorker((event: any) => {
         case 'deletePlanet':
           const planetName = event.data.planetName.toLowerCase().replace(' ', '');
           const orbitName = planetName + 'Orbit';
+
+          if (targetObject.name === planetName) {            
+            changeTargetPlanet(sun);
+          }
 
           const deleteObjectByName = (name: string) => {
             const object = scene.getObjectByName(name);
