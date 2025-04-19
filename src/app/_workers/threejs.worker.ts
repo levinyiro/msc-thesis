@@ -20,7 +20,7 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any, earth: any, sunSpotLight: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
+    let sun: any, earth: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
     let earthData: any, mercuryData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
 
     let earthAngle = 0;
@@ -61,6 +61,8 @@ insideWorker((event: any) => {
     let previewPlanet: any | null = null;
     let previewOrbit: any | null = null;
     const customPlanets: Planet[] = [];
+
+    let planetSpotLights: any[] = [];
 
     let targetObject: any;
 
@@ -189,13 +191,22 @@ insideWorker((event: any) => {
       return glow;
     }
 
-    function animate() {
-      if (sun) {
-        sunSpotLight.position.copy(sun.position);
-        sunSpotLight.target.position.set(earth.position.x, earth.position.y, earth.position.z);
-        sunSpotLight.target.updateMatrixWorld();
-      }
+    function createPlanetSpotlight(): any {
+      const light = new THREE.SpotLight(0xffffff, 0.1);
+      light.castShadow = false;
+      light.shadow.mapSize.width = 1024;
+      light.shadow.mapSize.height = 1024;
+      light.shadow.camera.near = 0.5;
+      light.shadow.camera.far = 1000;
+      light.angle = Math.PI / 8;
+      light.penumbra = 0.5;
+      light.decay = 2;
+      light.distance = 1000;
+      light.position.copy(sun.position);
+      return light;
+    }
 
+    function animate() {
       if (earth) {
         earthAngle += earthSpeed;
         earth.rotation.y += 0.05;
@@ -312,25 +323,6 @@ insideWorker((event: any) => {
     loadTextures().then(textures => {
       const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
-      sunSpotLight = new THREE.SpotLight(0xe7c6ff, 6);
-      sunSpotLight.castShadow = true;
-
-      sunSpotLight.shadow.mapSize.width = 2056;
-      sunSpotLight.shadow.mapSize.height = 2056;
-      sunSpotLight.shadow.camera.near = 0.5;
-      sunSpotLight.shadow.camera.far = 1000;
-      sunSpotLight.shadow.penumbra = 0.5;
-      sunSpotLight.shadow.focus = 1;
-
-      sunSpotLight.position.set(0, 0, 0);
-      sunSpotLight.angle = Math.PI / 6;
-      sunSpotLight.penumbra = 0.2;
-      sunSpotLight.decay = 2;
-      sunSpotLight.distance = 1000;
-      scene.add(sunSpotLight);
-      sunSpotLight.target = new THREE.Object3D();
-      scene.add(sunSpotLight.target);
-
       const sunTexture = new THREE.Texture(sunBitmap);
       sunTexture.needsUpdate = true;
       const sunGeometry = new THREE.SphereGeometry(2, 64, 32);
@@ -350,6 +342,7 @@ insideWorker((event: any) => {
 
       addStars(1000);
 
+      // earth mesh
       const earthTexture = new THREE.Texture(earthBitmap);
       earthTexture.needsUpdate = true;
       earthTexture.wrapS = THREE.RepeatWrapping;
@@ -362,6 +355,10 @@ insideWorker((event: any) => {
       earth.castShadow = true;
       earth.receiveShadow = true;
       earth.name = 'earth';
+      const earthSpotLight = createPlanetSpotlight();
+      earthSpotLight.target = earth;
+      scene.add(earthSpotLight);
+      planetSpotLights.push(earthSpotLight);
       scene.add(earth);
 
       const moonTexture = new THREE.Texture(moonBitmap);
@@ -372,6 +369,11 @@ insideWorker((event: any) => {
       const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
       const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
       moon = new THREE.Mesh(moonGeometry, moonMaterial);
+      
+      const moonSpotLight = createPlanetSpotlight();
+      moonSpotLight.target = moon;
+      scene.add(moonSpotLight);
+      planetSpotLights.push(moonSpotLight);
 
       moon.position.x = earth.position.x + moonDistance;
       moon.position.z = earth.position.z;
@@ -380,6 +382,7 @@ insideWorker((event: any) => {
       moon.name = 'moon';
       scene.add(moon);
 
+      // mercury mesh
       const mercuryTexture = new THREE.Texture(mercuryBitmap);
       mercuryTexture.needsUpdate = true;
       const mercuryGeometry = new THREE.SphereGeometry(0.3, 32, 32);
@@ -388,7 +391,12 @@ insideWorker((event: any) => {
       mercury.rotation.z = getAxialTilt(mercuryData?.axialTilt);
       mercury.name = 'mercury';
       scene.add(mercury);
+      const mercurySpotLight = createPlanetSpotlight();
+      mercurySpotLight.target = mercury;
+      scene.add(mercurySpotLight);
+      planetSpotLights.push(mercurySpotLight);
 
+      // venus mesh
       const venusTexture = new THREE.Texture(venusBitmap);
       venusTexture.needsUpdate = true;
       const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
@@ -397,6 +405,10 @@ insideWorker((event: any) => {
       venus.rotation.z = getAxialTilt(venusData?.axialTilt);
       venus.name = 'venus';
       scene.add(venus);
+      const venusSpotLight = createPlanetSpotlight();
+      venusSpotLight.target = venus;
+      scene.add(venusSpotLight);
+      planetSpotLights.push(venusSpotLight);
 
       const marsTexture = new THREE.Texture(marsBitmap);
       marsTexture.needsUpdate = true;
@@ -406,6 +418,10 @@ insideWorker((event: any) => {
       mars.rotation.z = getAxialTilt(marsData?.axialTilt);
       mars.name = 'mars';
       scene.add(mars);
+      const marsSpotLight = createPlanetSpotlight();
+      marsSpotLight.target = mars;
+      scene.add(marsSpotLight);
+      planetSpotLights.push(marsSpotLight);
 
       const jupiterTexture = new THREE.Texture(jupiterBitmap);
       jupiterTexture.needsUpdate = true;
@@ -415,6 +431,10 @@ insideWorker((event: any) => {
       jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
       jupiter.name = 'jupiter';
       scene.add(jupiter);
+      const jupiterSpotLight = createPlanetSpotlight();
+      jupiterSpotLight.target = jupiter;
+      scene.add(jupiterSpotLight);
+      planetSpotLights.push(jupiterSpotLight);
 
       const saturnTexture = new THREE.Texture(saturnBitmap);
       saturnTexture.needsUpdate = true;
@@ -424,6 +444,10 @@ insideWorker((event: any) => {
       saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
       saturn.name = 'saturn';
       scene.add(saturn);
+      const saturnSpotLight = createPlanetSpotlight();
+      saturnSpotLight.target = saturn;
+      scene.add(saturnSpotLight);
+      planetSpotLights.push(saturnSpotLight);
 
       const uranusTexture = new THREE.Texture(uranusBitmap);
       uranusTexture.needsUpdate = true;
@@ -433,6 +457,10 @@ insideWorker((event: any) => {
       uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
       uranus.name = 'uranus'
       scene.add(uranus);
+      const uranusSpotLight = createPlanetSpotlight();
+      uranusSpotLight.target = uranus;
+      scene.add(uranusSpotLight);
+      planetSpotLights.push(uranusSpotLight);uranus
 
       const neptuneTexture = new THREE.Texture(neptuneBitmap);
       neptuneTexture.needsUpdate = true;
@@ -442,6 +470,10 @@ insideWorker((event: any) => {
       neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
       neptune.name = 'neptune'
       scene.add(neptune);
+      const neptuneSpotLight = createPlanetSpotlight();
+      neptuneSpotLight.target = neptune;
+      scene.add(neptuneSpotLight);
+      planetSpotLights.push(neptuneSpotLight);
 
       animate();
     }).catch(error => {
@@ -509,6 +541,11 @@ insideWorker((event: any) => {
 
             const newPlanet = createNewPlanet(planetData, position);
             scene.add(newPlanet);
+
+            const newPlanetSpotLight = createPlanetSpotlight();
+            newPlanetSpotLight.target = newPlanet;
+            scene.add(newPlanetSpotLight);
+            planetSpotLights.push(newPlanetSpotLight);
 
             planetData.mesh = newPlanet;
             customPlanets.push(planetData);
