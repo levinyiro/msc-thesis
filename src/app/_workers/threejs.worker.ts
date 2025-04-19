@@ -191,7 +191,7 @@ insideWorker((event: any) => {
       return glow;
     }
 
-    function createPlanetSpotlight(): any {
+    function createPlanetSpotlight(name: string): any {
       const light = new THREE.SpotLight(0xffffff, 0.1);
       light.castShadow = false;
       light.shadow.mapSize.width = 1024;
@@ -202,6 +202,7 @@ insideWorker((event: any) => {
       light.penumbra = 0.5;
       light.decay = 2;
       light.distance = 1000;
+      light.name = name.replace(' ', '').toLowerCase() + 'SpotLight';
       light.position.copy(sun.position);
       return light;
     }
@@ -355,7 +356,7 @@ insideWorker((event: any) => {
       earth.castShadow = true;
       earth.receiveShadow = true;
       earth.name = 'earth';
-      const earthSpotLight = createPlanetSpotlight();
+      const earthSpotLight = createPlanetSpotlight(earth.name);
       earthSpotLight.target = earth;
       scene.add(earthSpotLight);
       planetSpotLights.push(earthSpotLight);
@@ -369,11 +370,6 @@ insideWorker((event: any) => {
       const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
       const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
       moon = new THREE.Mesh(moonGeometry, moonMaterial);
-      
-      const moonSpotLight = createPlanetSpotlight();
-      moonSpotLight.target = moon;
-      scene.add(moonSpotLight);
-      planetSpotLights.push(moonSpotLight);
 
       moon.position.x = earth.position.x + moonDistance;
       moon.position.z = earth.position.z;
@@ -381,6 +377,11 @@ insideWorker((event: any) => {
       moon.receiveShadow = true;
       moon.name = 'moon';
       scene.add(moon);
+
+      const moonSpotLight = createPlanetSpotlight(moon.name);
+      moonSpotLight.target = moon;
+      scene.add(moonSpotLight);
+      planetSpotLights.push(moonSpotLight);
 
       // mercury mesh
       const mercuryTexture = new THREE.Texture(mercuryBitmap);
@@ -391,7 +392,7 @@ insideWorker((event: any) => {
       mercury.rotation.z = getAxialTilt(mercuryData?.axialTilt);
       mercury.name = 'mercury';
       scene.add(mercury);
-      const mercurySpotLight = createPlanetSpotlight();
+      const mercurySpotLight = createPlanetSpotlight(mercury.name);
       mercurySpotLight.target = mercury;
       scene.add(mercurySpotLight);
       planetSpotLights.push(mercurySpotLight);
@@ -405,7 +406,7 @@ insideWorker((event: any) => {
       venus.rotation.z = getAxialTilt(venusData?.axialTilt);
       venus.name = 'venus';
       scene.add(venus);
-      const venusSpotLight = createPlanetSpotlight();
+      const venusSpotLight = createPlanetSpotlight(venus.name);
       venusSpotLight.target = venus;
       scene.add(venusSpotLight);
       planetSpotLights.push(venusSpotLight);
@@ -418,7 +419,7 @@ insideWorker((event: any) => {
       mars.rotation.z = getAxialTilt(marsData?.axialTilt);
       mars.name = 'mars';
       scene.add(mars);
-      const marsSpotLight = createPlanetSpotlight();
+      const marsSpotLight = createPlanetSpotlight(mars.name);
       marsSpotLight.target = mars;
       scene.add(marsSpotLight);
       planetSpotLights.push(marsSpotLight);
@@ -431,7 +432,7 @@ insideWorker((event: any) => {
       jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
       jupiter.name = 'jupiter';
       scene.add(jupiter);
-      const jupiterSpotLight = createPlanetSpotlight();
+      const jupiterSpotLight = createPlanetSpotlight(jupiter.name);
       jupiterSpotLight.target = jupiter;
       scene.add(jupiterSpotLight);
       planetSpotLights.push(jupiterSpotLight);
@@ -444,7 +445,7 @@ insideWorker((event: any) => {
       saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
       saturn.name = 'saturn';
       scene.add(saturn);
-      const saturnSpotLight = createPlanetSpotlight();
+      const saturnSpotLight = createPlanetSpotlight(saturn.name);
       saturnSpotLight.target = saturn;
       scene.add(saturnSpotLight);
       planetSpotLights.push(saturnSpotLight);
@@ -457,7 +458,7 @@ insideWorker((event: any) => {
       uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
       uranus.name = 'uranus'
       scene.add(uranus);
-      const uranusSpotLight = createPlanetSpotlight();
+      const uranusSpotLight = createPlanetSpotlight(uranus.name);
       uranusSpotLight.target = uranus;
       scene.add(uranusSpotLight);
       planetSpotLights.push(uranusSpotLight);uranus
@@ -470,7 +471,7 @@ insideWorker((event: any) => {
       neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
       neptune.name = 'neptune'
       scene.add(neptune);
-      const neptuneSpotLight = createPlanetSpotlight();
+      const neptuneSpotLight = createPlanetSpotlight(neptune.name);
       neptuneSpotLight.target = neptune;
       scene.add(neptuneSpotLight);
       planetSpotLights.push(neptuneSpotLight);
@@ -542,7 +543,7 @@ insideWorker((event: any) => {
             const newPlanet = createNewPlanet(planetData, position);
             scene.add(newPlanet);
 
-            const newPlanetSpotLight = createPlanetSpotlight();
+            const newPlanetSpotLight = createPlanetSpotlight(newPlanet.name);
             newPlanetSpotLight.target = newPlanet;
             scene.add(newPlanetSpotLight);
             planetSpotLights.push(newPlanetSpotLight);
@@ -800,6 +801,13 @@ insideWorker((event: any) => {
 
           deleteObjectByName(planetName);
           deleteObjectByName(orbitName);
+
+          const planetSpotLight = scene.getObjectByName(`${planetName}SpotLight`);
+          if (planetSpotLight) {
+              scene.remove(planetSpotLight);
+              if (planetSpotLight.target) scene.remove(planetSpotLight.target);
+              planetSpotLight.dispose();
+          }
 
           if (planetName === 'earth') {
             deleteObjectByName('moon');
