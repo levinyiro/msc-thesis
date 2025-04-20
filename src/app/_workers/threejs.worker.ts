@@ -20,18 +20,14 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any, earth: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
-    let earthData: any, mercuryData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
+    let sun: any, earth: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null, moon: any = null;
+    let earthData: any, mercuryData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null, moonData: any = { speed: 0.005, angle: 0, distance: 2 };
 
     let showLines = true;
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     let yaw = 0, pitch = 0;
-    let moonSpeed: number;
     let orbitLines: any[] = [];
-    let moon: any;
-    let moonAngle = 0;
-    const moonDistance = 2;
     const distanceDivider = 3000000;
 
     // fps counting
@@ -225,9 +221,9 @@ insideWorker((event: any) => {
       }
 
       if (moon && earth) {
-        moonAngle += moonSpeed;
-        moon.position.x = earth.position.x + Math.sin(moonAngle) * moonDistance;
-        moon.position.z = earth.position.z + Math.cos(moonAngle) * moonDistance;
+        moon.angle += moonData.speed;
+        moon.position.x = earth.position.x + Math.sin(moonData.angle) * moonData.distance;
+        moon.position.z = earth.position.z + Math.cos(moonData.angle) * moonData.distance;
       }
 
       if (mars) {
@@ -380,7 +376,7 @@ insideWorker((event: any) => {
       const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
       moon = new THREE.Mesh(moonGeometry, moonMaterial);
 
-      moon.position.x = earth.position.x + moonDistance;
+      moon.position.x = earth.position.x + moonData.distance;
       moon.position.z = earth.position.z;
       moon.castShadow = true;
       moon.receiveShadow = true;
@@ -726,7 +722,6 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
           earthData.speed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
-          moonSpeed = 0.005;
           break;
 
         case 'marsData':
