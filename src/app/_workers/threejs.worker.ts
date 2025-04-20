@@ -152,6 +152,17 @@ insideWorker((event: any) => {
       return textures;
     }
 
+    async function loadTextureWithFetch(path: string): Promise<any> {
+      const response = await fetch(path);
+      const blob = await response.blob();
+      const imageBitmap = await createImageBitmap(blob);
+      
+      const texture = new THREE.Texture(imageBitmap);
+      texture.needsUpdate = true;
+    
+      return texture;
+    }
+
     function getGlow(bitmap: any, size: number) {
       const glowTexture = new THREE.Texture(bitmap);
       glowTexture.needsUpdate = true;
@@ -291,25 +302,46 @@ insideWorker((event: any) => {
       requestAnimationFrame(animate);
     }
 
-    function createNewPlanet(data: Planet, position: any): any {
+    function createNewPlanet(data: Planet, position: any, texture: any): any {
       const geometry = new THREE.SphereGeometry(data.size || 0.3, 32, 32);
-
+    
       const material = new THREE.MeshPhongMaterial({
-        color: data.color,
+        map: texture,
       });
-
+    
       const planet = new THREE.Mesh(geometry, material);
       planet.position.copy(position);
       planet.rotation.z = getAxialTilt(data.axialTilt || 0);
       planet.castShadow = true;
       planet.receiveShadow = true;
       planet.name = data.englishName?.toLowerCase().replace(' ', '');
-
+    
       return planet;
     }
 
     function calculateOrbitDistance(position: any): number {
       return position.distanceTo(sun.position) * distanceDivider;
+    }
+
+    function estimateAvgTemperature(distance: number) {      
+      // 57475497.740633406 - 167 Celsius degree
+      // 149339835.22790316 - 15 Celsius degree
+      // 226914680.29744518 - -63 Celsius degree
+
+      const x1 = 57475497.740633406;
+      const y1 = 167;
+      const x2 = 149339835.22790316;
+      const y2 = 15;
+      const x3 = 226914680.29744518;
+      const y3 = -63;
+    
+      const denom = (x1 - x2)*(x1 - x3)*(x2 - x3);
+    
+      const a = (x3*(y2 - y1) + x2*(y1 - y3) + x1*(y3 - y2)) / denom;
+      const b = (x3*x3*(y1 - y2) + x2*x2*(y3 - y1) + x1*x1*(y2 - y3)) / denom;
+      const c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
+    
+      return a * distance * distance + b * distance + c;
     }
 
     function changeTargetPlanet(intersected: string) {
@@ -543,34 +575,53 @@ insideWorker((event: any) => {
             planetData.angle = Math.atan2(position.z, position.x);
             planetData.speed = calculateSpeedFromVolatility(planetData, ANIMATION_SPEED);
 
-            const newPlanet = createNewPlanet(planetData, position);
-            scene.add(newPlanet);
 
-            const newPlanetSpotLight = createPlanetSpotlight(newPlanet.name);
-            newPlanetSpotLight.target = newPlanet;
-            scene.add(newPlanetSpotLight);
-            planetSpotLights.push(newPlanetSpotLight);
+            
+            // count distance between sun and position
+            const estimatedTemperature = estimateAvgTemperature(calculateOrbitDistance(position));
+            let texturePath = '';
 
-            planetData.mesh = newPlanet;
-            customPlanets.push(planetData);
-
-            if (previewPlanet) {
-              scene.remove(previewPlanet);
-              previewPlanet = null;
-            }
-            if (previewOrbit) {
-              scene.remove(previewOrbit);
-              previewOrbit = null;
+            if (estimatedTemperature > 100) {
+              texturePath = '../assets/textures/exoplanets/red.jpg';
+            } else if (estimatedTemperature > 20) {
+              texturePath = '../assets/textures/exoplanets/blue-green.jpg';
+            } else if (estimatedTemperature > 0) {
+              texturePath = '../assets/textures/exoplanets/green.jpg';
+            } else {
+              texturePath = '../assets/textures/exoplanets/gray.jpg';
             }
 
-            if (showLines) {
-              const permanentOrbit = createOrbitLine(planetData);
-              permanentOrbit.name = planetData.englishName.toLowerCase().replace(' ', '') + 'Orbit';
+            loadTextureWithFetch(texturePath).then((texture) => {
+              const newPlanet = createNewPlanet(planetData, position, texture);
+              scene.add(newPlanet);
 
-              orbitLines.push(permanentOrbit);
-            }
+              const newPlanetSpotLight = createPlanetSpotlight(newPlanet.name);
+              newPlanetSpotLight.target = newPlanet;
+              scene.add(newPlanetSpotLight);
+              planetSpotLights.push(newPlanetSpotLight);
+  
+              planetData.mesh = newPlanet;
 
-            isAddingPlanet = false;
+              customPlanets.push(planetData);
+
+              if (previewPlanet) {
+                scene.remove(previewPlanet);
+                previewPlanet = null;
+              }
+              if (previewOrbit) {
+                scene.remove(previewOrbit);
+                previewOrbit = null;
+              }
+  
+              if (showLines) {
+                const permanentOrbit = createOrbitLine(planetData);
+                permanentOrbit.name = planetData.englishName.toLowerCase().replace(' ', '') + 'Orbit';
+  
+                orbitLines.push(permanentOrbit);
+              }
+  
+              isAddingPlanet = false;
+            });
           } else {
             isDragging = true;
             previousMousePosition.x = event.data.mouseX;

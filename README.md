@@ -155,3 +155,32 @@ scrolling miért nem jó - wheel helyette
 
 smooth:
 https://threejs.org/docs/#api/en/renderers/WebGLRenderer.antialias
+
+# estimateTemperature
+Itt van a diagram: az ismert bolygóadatok alapján (Merkúr, Föld, Mars) kirajzoltam a becsült felszíni hőmérsékletet a Naptól való távolság függvényében. A narancssárga görbe mutatja, hogyan változik a hőmérséklet a távolság függvényében egy kvadratikus közelítés alapján. A kék pontok pedig az ismert bolygóadatokat jelölik.
+
+Ha szeretnéd, generálhatunk több pontot is, vagy megnézhetjük egy másik illesztési modell szerint is.
+![diagram](image.png)
+
+Persze! Az általad megadott három adatpár alapján (Merkúr, Föld, Mars) egy **másodfokú (kvadratikus) függvényt** illesztettünk, amely a következő alakú:
+
+\[
+T(d) = a \cdot d^2 + b \cdot d + c
+\]
+
+ahol:
+- \( T(d) \) az adott távolsághoz tartozó becsült hőmérséklet (Celsius-fokban),
+- \( d \) a távolság a Naptól (km-ben),
+- \( a, b, c \) az illesztett együtthatók, amiket a három ismert pontból számoltunk.
+
+A konkrét értékek az illesztésből:
+
+\[
+T(d) = 2.357 \times 10^{-15} \cdot d^2 - 0.000525 \cdot d + 27186.36
+\]
+
+Ez az egyenlet azt jelenti, hogy:
+- A hőmérséklet nem lineárisan csökken a távolsággal, hanem gyorsuló mértékben (ezért kvadratikus a függvény).
+- Közel jól illeszkedik a Merkúr, Föld és Mars hőmérsékleti és távolságadataira.
+
+Ha szeretnéd, kiszámolhatjuk vele más bolygók (pl. Vénusz, Jupiter stb.) becsült hőmérsékletét is, vagy akár megnézhetjük, hogy egy bizonyos hőmérséklethez mekkora távolság tartozik.
