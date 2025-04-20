@@ -21,7 +21,7 @@ insideWorker((event: any) => {
     scene.add(ambientLight);
 
     let sun: any, earth: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null, moon: any = null;
-    let earthData: any, mercuryData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null, moonData: any = { speed: 0.005, angle: 0, distance: 2 };
+    let earthData: Planet, mercuryData: Planet, venusData: Planet, marsData: Planet, jupiterData: Planet, saturnData: Planet, uranusData: Planet, neptuneData: Planet, moonData: Planet = { speed: 0.005, angle: 0, distance: 2 };
 
     let showLines = true;
     let isDragging = false;
@@ -110,14 +110,14 @@ insideWorker((event: any) => {
     }
 
     if (showLines) {
-      createOrbitLine(earthData);
-      createOrbitLine(venusData);
-      createOrbitLine(mercuryData);
-      createOrbitLine(marsData);
-      createOrbitLine(jupiterData);
-      createOrbitLine(saturnData);
-      createOrbitLine(uranusData);
-      createOrbitLine(neptuneData);
+      createOrbitLine(earthData!);
+      createOrbitLine(venusData!);
+      createOrbitLine(mercuryData!);
+      createOrbitLine(marsData!);
+      createOrbitLine(jupiterData!);
+      createOrbitLine(saturnData!);
+      createOrbitLine(uranusData!);
+      createOrbitLine(neptuneData!);
     }
 
     async function loadTextures() {
@@ -222,8 +222,8 @@ insideWorker((event: any) => {
 
       if (moon && earth) {
         moon.angle += moonData.speed;
-        moon.position.x = earth.position.x + Math.sin(moonData.angle) * moonData.distance;
-        moon.position.z = earth.position.z + Math.cos(moonData.angle) * moonData.distance;
+        moon.position.x = earth.position.x + Math.sin(moonData.angle!) * moonData.distance;
+        moon.position.z = earth.position.z + Math.cos(moonData.angle!) * moonData.distance;
       }
 
       if (mars) {
