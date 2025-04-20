@@ -23,28 +23,11 @@ insideWorker((event: any) => {
     let sun: any, earth: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null;
     let earthData: any, mercuryData: any, venusData: any = null, marsData: any = null, jupiterData: any = null, saturnData: any = null, uranusData: any = null, neptuneData: any = null;
 
-    let earthAngle = 0;
-    let mercuryAngle = 0;
-    let venusAngle = 0;
-    let marsAngle = 0;
-    let jupiterAngle = 0;
-    let saturnAngle = 0;
-    let uranusAngle = 0;
-    let neptuneAngle = 0;
-
     let showLines = true;
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     let yaw = 0, pitch = 0;
-    let earthSpeed: number;
-    let mercurySpeed: number;
-    let venusSpeed: number;
     let moonSpeed: number;
-    let marsSpeed: number;
-    let jupiterSpeed: number;
-    let saturnSpeed: number;
-    let uranusSpeed: number;
-    let neptuneSpeed: number;
     let orbitLines: any[] = [];
     let moon: any;
     let moonAngle = 0;
@@ -192,7 +175,7 @@ insideWorker((event: any) => {
     }
 
     function createPlanetSpotlight(name: string): any {
-      const light = new THREE.SpotLight(0xffffff, 0.1);
+      const light = new THREE.SpotLight(0xffffff, 0.7);
       light.castShadow = false;
       light.shadow.mapSize.width = 1024;
       light.shadow.mapSize.height = 1024;
@@ -207,26 +190,38 @@ insideWorker((event: any) => {
       return light;
     }
 
+    function getInitialAngle(planetData: Planet, date: Date): number {
+      const T = planetData.sideralOrbit; // keringési idő napokban
+      const n = 2 * Math.PI / T; // középmozgás radian/nap
+      const J2000 = new Date('2000-01-01T12:00:00Z'); // alap dátum
+    
+      const daysSinceEpoch = (date.getTime() - J2000.getTime()) / (1000 * 60 * 60 * 24);
+      const M = n * daysSinceEpoch;
+    
+      return M % (2 * Math.PI); // közép-anomália radiánban, mint kiinduló szög
+    }
+
     function animate() {
       if (earth) {
-        earthAngle += earthSpeed;
+        earth.angle += earthData.speed;
+
         earth.rotation.y += 0.05;
-        earth.position.x = Math.sin(earthAngle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
-        earth.position.z = Math.cos(earthAngle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
+        earth.position.x = Math.sin(earth.angle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
+        earth.position.z = Math.cos(earth.angle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
       }
 
       if (mercury) {
-        mercuryAngle += mercurySpeed;
+        mercury.angle += mercuryData.speed;
         mercury.rotation.y += 0.05;
-        mercury.position.x = Math.sin(mercuryAngle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
-        mercury.position.z = Math.cos(mercuryAngle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
+        mercury.position.x = Math.sin(mercury.angle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
+        mercury.position.z = Math.cos(mercury.angle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
       }
 
       if (venus) {
-        venusAngle += venusSpeed;
+        venus.angle += venusData.speed;
         venus.rotation.y += 0.05;
-        venus.position.x = Math.sin(venusAngle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
-        venus.position.z = Math.cos(venusAngle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
+        venus.position.x = Math.sin(venus.angle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
+        venus.position.z = Math.cos(venus.angle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
       }
 
       if (moon && earth) {
@@ -236,48 +231,48 @@ insideWorker((event: any) => {
       }
 
       if (mars) {
-        marsAngle += marsSpeed;
+        mars.angle += marsData.speed;
         mars.rotation.y += 0.05;
-        mars.position.x = Math.sin(marsAngle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
-        mars.position.z = Math.cos(marsAngle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
+        mars.position.x = Math.sin(mars.angle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
+        mars.position.z = Math.cos(mars.angle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
       }
 
       if (jupiter) {
-        jupiterAngle += jupiterSpeed;
+        jupiter.angle += jupiterData.speed;
         jupiter.rotation.y += 0.05;
-        jupiter.position.x = Math.sin(jupiterAngle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
-        jupiter.position.z = Math.cos(jupiterAngle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
+        jupiter.position.x = Math.sin(jupiter.angle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
+        jupiter.position.z = Math.cos(jupiter.angle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
       }
 
       if (saturn) {
-        saturnAngle += saturnSpeed;
+        saturn.angle += saturnData.speed;
         saturn.rotation.y += 0.05;
-        saturn.position.x = Math.sin(saturnAngle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
-        saturn.position.z = Math.cos(saturnAngle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
+        saturn.position.x = Math.sin(saturn.angle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
+        saturn.position.z = Math.cos(saturn.angle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
       }
 
       if (uranus) {
-        uranusAngle += uranusSpeed;
+        uranus.angle += uranusData.speed;
         uranus.rotation.y += 0.05;
-        uranus.position.x = Math.sin(uranusAngle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
-        uranus.position.z = Math.cos(uranusAngle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
+        uranus.position.x = Math.sin(uranus.angle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
+        uranus.position.z = Math.cos(uranus.angle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
       }
 
       if (neptune) {
-        neptuneAngle += neptuneSpeed;
+        neptune.angle += neptuneData.speed;
         neptune.rotation.y += 0.05;
-        neptune.position.x = Math.sin(neptuneAngle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
-        neptune.position.z = Math.cos(neptuneAngle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
+        neptune.position.x = Math.sin(neptune.angle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
+        neptune.position.z = Math.cos(neptune.angle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
       }
 
       // fps counting
-      const now = performance.now();
+      const nowFps = performance.now();
       frameCount++;
 
-      if (now - lastFpsUpdate >= 1000) {
+      if (nowFps - lastFpsUpdate >= 1000) {
         fps = frameCount;
         frameCount = 0;
-        lastFpsUpdate = now;
+        lastFpsUpdate = nowFps;
         postMessage({ type: 'fps', fps: fps });
       }
 
@@ -325,11 +320,11 @@ insideWorker((event: any) => {
       const currentDistance = camera.position.distanceTo(targetObject.position);
       targetObject = intersected;
       const direction = new THREE.Vector3()
-          .subVectors(camera.position, targetObject.position)
-          .normalize();
+        .subVectors(camera.position, targetObject.position)
+        .normalize();
 
       const newCameraPosition = targetObject.position.clone()
-          .addScaledVector(direction, currentDistance);
+        .addScaledVector(direction, currentDistance);
 
       cameraTargetPosition.copy(newCameraPosition);
     }
@@ -373,6 +368,7 @@ insideWorker((event: any) => {
       earthSpotLight.target = earth;
       scene.add(earthSpotLight);
       planetSpotLights.push(earthSpotLight);
+      earth.angle = getInitialAngle(earthData, new Date());
       scene.add(earth);
 
       const moonTexture = new THREE.Texture(moonBitmap);
@@ -404,6 +400,7 @@ insideWorker((event: any) => {
       mercury = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
       mercury.rotation.z = getAxialTilt(mercuryData?.axialTilt);
       mercury.name = 'mercury';
+      mercury.angle = getInitialAngle(mercuryData, new Date());
       scene.add(mercury);
       const mercurySpotLight = createPlanetSpotlight(mercury.name);
       mercurySpotLight.target = mercury;
@@ -418,6 +415,7 @@ insideWorker((event: any) => {
       venus = new THREE.Mesh(venusGeometry, venusMaterial);
       venus.rotation.z = getAxialTilt(venusData?.axialTilt);
       venus.name = 'venus';
+      venus.angle = getInitialAngle(venusData, new Date());
       scene.add(venus);
       const venusSpotLight = createPlanetSpotlight(venus.name);
       venusSpotLight.target = venus;
@@ -431,6 +429,7 @@ insideWorker((event: any) => {
       mars = new THREE.Mesh(marsGeometry, marsMaterial);
       mars.rotation.z = getAxialTilt(marsData?.axialTilt);
       mars.name = 'mars';
+      mars.angle = getInitialAngle(marsData, new Date());
       scene.add(mars);
       const marsSpotLight = createPlanetSpotlight(mars.name);
       marsSpotLight.target = mars;
@@ -444,6 +443,7 @@ insideWorker((event: any) => {
       jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
       jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
       jupiter.name = 'jupiter';
+      jupiter.angle = getInitialAngle(jupiterData, new Date());
       scene.add(jupiter);
       const jupiterSpotLight = createPlanetSpotlight(jupiter.name);
       jupiterSpotLight.target = jupiter;
@@ -457,6 +457,7 @@ insideWorker((event: any) => {
       saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
       saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
       saturn.name = 'saturn';
+      saturn.angle = getInitialAngle(saturnData, new Date());
       scene.add(saturn);
       const saturnSpotLight = createPlanetSpotlight(saturn.name);
       saturnSpotLight.target = saturn;
@@ -470,11 +471,12 @@ insideWorker((event: any) => {
       uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
       uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
       uranus.name = 'uranus'
+      uranus.angle = getInitialAngle(uranusData, new Date());
       scene.add(uranus);
       const uranusSpotLight = createPlanetSpotlight(uranus.name);
       uranusSpotLight.target = uranus;
       scene.add(uranusSpotLight);
-      planetSpotLights.push(uranusSpotLight);uranus
+      planetSpotLights.push(uranusSpotLight); uranus
 
       const neptuneTexture = new THREE.Texture(neptuneBitmap);
       neptuneTexture.needsUpdate = true;
@@ -483,6 +485,7 @@ insideWorker((event: any) => {
       neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
       neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
       neptune.name = 'neptune'
+      neptune.angle = getInitialAngle(neptuneData, new Date());
       scene.add(neptune);
       const neptuneSpotLight = createPlanetSpotlight(neptune.name);
       neptuneSpotLight.target = neptune;
@@ -511,11 +514,11 @@ insideWorker((event: any) => {
           const intersects = raycaster.intersectObjects(scene.children, true);
 
           if (intersects.length > 0) {
-              const intersected = intersects[0].object;
-      
-              if (!intersected.name.includes('Orbit')) {
-                changeTargetPlanet(intersected);
-              }
+            const intersected = intersects[0].object;
+
+            if (!intersected.name.includes('Orbit')) {
+              changeTargetPlanet(intersected);
+            }
           }
 
           if (isAddingPlanet) {
@@ -706,7 +709,7 @@ insideWorker((event: any) => {
           mercuryData.color = 0xe7e8ec;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(mercuryData);
-          mercurySpeed = calculateSpeedFromVolatility(mercuryData, ANIMATION_SPEED);
+          mercuryData.speed = calculateSpeedFromVolatility(mercuryData, ANIMATION_SPEED);
           break;
 
         case 'venusData':
@@ -714,7 +717,7 @@ insideWorker((event: any) => {
           venusData.color = 0xeecb8b;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(venusData);
-          venusSpeed = calculateSpeedFromVolatility(venusData, ANIMATION_SPEED);
+          venusData.speed = calculateSpeedFromVolatility(venusData, ANIMATION_SPEED);
           break;
 
         case 'earthData':
@@ -722,7 +725,7 @@ insideWorker((event: any) => {
           earthData.color = 0x6b93d6;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earthData);
-          earthSpeed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
+          earthData.speed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
           moonSpeed = 0.005;
           break;
 
@@ -731,7 +734,7 @@ insideWorker((event: any) => {
           marsData.color = 0x993d00;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(marsData);
-          marsSpeed = calculateSpeedFromVolatility(marsData, ANIMATION_SPEED);
+          marsData.speed = calculateSpeedFromVolatility(marsData, ANIMATION_SPEED);
           break;
 
         case 'jupiterData':
@@ -739,7 +742,7 @@ insideWorker((event: any) => {
           jupiterData.color = 0xb07f35;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(jupiterData);
-          jupiterSpeed = calculateSpeedFromVolatility(jupiterData, ANIMATION_SPEED);
+          jupiterData.speed = calculateSpeedFromVolatility(jupiterData, ANIMATION_SPEED);
           break;
 
         case 'saturnData':
@@ -747,7 +750,7 @@ insideWorker((event: any) => {
           saturnData.color = 0xb08f36;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(saturnData);
-          saturnSpeed = calculateSpeedFromVolatility(saturnData, ANIMATION_SPEED);
+          saturnData.speed = calculateSpeedFromVolatility(saturnData, ANIMATION_SPEED);
           break;
 
         case 'uranusData':
@@ -755,7 +758,7 @@ insideWorker((event: any) => {
           uranusData.color = 0x5580aa;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(uranusData);
-          uranusSpeed = calculateSpeedFromVolatility(uranusData, ANIMATION_SPEED);
+          uranusData.speed = calculateSpeedFromVolatility(uranusData, ANIMATION_SPEED);
           break;
 
         case 'neptuneData':
@@ -763,7 +766,7 @@ insideWorker((event: any) => {
           neptuneData.color = 0x366896;
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(neptuneData);
-          neptuneSpeed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
+          neptuneData.speed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
           break;
 
         case 'startAddingPlanet':
@@ -783,7 +786,7 @@ insideWorker((event: any) => {
           const planetName = event.data.planetName.toLowerCase().replace(' ', '');
           const orbitName = planetName + 'Orbit';
 
-          if (targetObject.name === planetName) {            
+          if (targetObject.name === planetName) {
             changeTargetPlanet(sun);
           }
 
@@ -812,9 +815,9 @@ insideWorker((event: any) => {
 
           const planetSpotLight = scene.getObjectByName(`${planetName}SpotLight`);
           if (planetSpotLight) {
-              scene.remove(planetSpotLight);
-              if (planetSpotLight.target) scene.remove(planetSpotLight.target);
-              planetSpotLight.dispose();
+            scene.remove(planetSpotLight);
+            if (planetSpotLight.target) scene.remove(planetSpotLight.target);
+            planetSpotLight.dispose();
           }
 
           if (planetName === 'earth') {

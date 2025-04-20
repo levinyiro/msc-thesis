@@ -11,6 +11,7 @@ export interface Planet {
     speed?: any;
     mesh?: any;
     angle?: number;
+    sideralOrbit?: any;
     mass?: {
       massValue: number;
       massExponent: number;
