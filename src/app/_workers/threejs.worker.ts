@@ -70,25 +70,28 @@ insideWorker((event: any) => {
 
     function createOrbitLine(data: Planet): any {
       if (!data) return null;
-
-      const perihelion = data.perihelion / distanceDivider;
-      const aphelion = data.aphelion / distanceDivider;
-      const eccentricity = data.eccentricity;
-
-      const semiMajorAxis = (perihelion + aphelion) / 2;
-      const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - Math.pow(eccentricity, 2));
-
-      const orbitCurve = new THREE.EllipseCurve(
-        0, 0, semiMajorAxis, semiMinorAxis, 0, 2 * Math.PI, false, 0
-      );
-
-      const points = orbitCurve.getPoints(100000);
+    
+      const semiMajorAxis = data.semimajorAxis / distanceDivider;
+      const eccentricity = data.eccentricity || 0;
+      const focalDistance = semiMajorAxis * eccentricity;
+      
+      const points = [];
+      const segments = 100;
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const r = (semiMajorAxis * (1 - eccentricity * eccentricity)) / 
+                  (1 + eccentricity * Math.cos(angle));
+        const x = r * Math.cos(angle) - focalDistance;
+        const z = r * Math.sin(angle);
+        points.push(new THREE.Vector3(x, 0, z));
+      }
+    
       const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: data.color });
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
-      orbitPath.rotation.x = Math.PI / 2;
+            
       orbitPath.name = data.englishName?.toLowerCase().replace(' ', '') + 'Orbit';
-
+    
       scene.add(orbitPath);
       orbitLines.push(orbitPath);
       return orbitPath;
@@ -145,10 +148,10 @@ insideWorker((event: any) => {
       const response = await fetch(path);
       const blob = await response.blob();
       const imageBitmap = await createImageBitmap(blob);
-      
+
       const texture = new THREE.Texture(imageBitmap);
       texture.needsUpdate = true;
-    
+
       return texture;
     }
 
@@ -190,27 +193,27 @@ insideWorker((event: any) => {
       const T = planetData.sideralOrbit; // keringési idő napokban
       const n = 2 * Math.PI / T; // középmozgás radian/nap
       const J2000 = new Date('2000-01-01T12:00:00Z'); // alap dátum
-    
+
       const daysSinceEpoch = (date.getTime() - J2000.getTime()) / (1000 * 60 * 60 * 24);
       const M = n * daysSinceEpoch;
-    
+
       return M % (2 * Math.PI); // közép-anomália radiánban, mint kiinduló szög
     }
 
     function createNewPlanet(data: Planet, position: any, texture: any): any {
       const geometry = new THREE.SphereGeometry(data.size || 0.3, 32, 32);
-    
+
       const material = new THREE.MeshPhongMaterial({
         map: texture,
       });
-    
+
       const planet = new THREE.Mesh(geometry, material);
       planet.position.copy(position);
       planet.rotation.z = getAxialTilt(data.axialTilt || 0);
       planet.castShadow = true;
       planet.receiveShadow = true;
       planet.name = data.englishName?.toLowerCase().replace(' ', '');
-    
+
       return planet;
     }
 
@@ -218,7 +221,7 @@ insideWorker((event: any) => {
       return position.distanceTo(sun.position) * distanceDivider;
     }
 
-    function estimateAvgTemperature(distance: number) {      
+    function estimateAvgTemperature(distance: number) {
       // 57475497.740633406 - 167 Celsius degree
       // 149339835.22790316 - 15 Celsius degree
       // 226914680.29744518 - -63 Celsius degree
@@ -229,13 +232,13 @@ insideWorker((event: any) => {
       const y2 = 15;
       const x3 = 226914680.29744518;
       const y3 = -63;
-    
-      const denom = (x1 - x2)*(x1 - x3)*(x2 - x3);
-    
-      const a = (x3*(y2 - y1) + x2*(y1 - y3) + x1*(y3 - y2)) / denom;
-      const b = (x3*x3*(y1 - y2) + x2*x2*(y3 - y1) + x1*x1*(y2 - y3)) / denom;
+
+      const denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
+
+      const a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
+      const b = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;
       const c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom;
-    
+
       return a * distance * distance + b * distance + c;
     }
 
@@ -250,6 +253,23 @@ insideWorker((event: any) => {
         .addScaledVector(direction, currentDistance);
 
       cameraTargetPosition.copy(newCameraPosition);
+    }
+
+    function setPlanetPosition(planet: any, planetData: Planet) {
+      if (!planetData) return;
+
+      planet.angle -= planetData.speed;
+      planet.rotation.y += 0.05;
+
+      const semiMajorAxis = planetData.semimajorAxis / distanceDivider;
+      const eccentricity = planetData.eccentricity || 0;
+      const focalDistance = semiMajorAxis * eccentricity;
+
+      const r = (semiMajorAxis * (1 - eccentricity * eccentricity)) /
+        (1 + eccentricity * Math.cos(planet.angle));
+
+      planet.position.x = r * Math.cos(planet.angle) - focalDistance;
+      planet.position.z = r * Math.sin(planet.angle);
     }
 
     if (showLines) {
@@ -319,6 +339,7 @@ insideWorker((event: any) => {
       moon.castShadow = true;
       moon.receiveShadow = true;
       moon.name = 'moon';
+      moon.angle = moonData.angle;
       scene.add(moon);
 
       const moonSpotLight = createPlanetSpotlight(moon.name);
@@ -432,67 +453,19 @@ insideWorker((event: any) => {
     });
 
     function animate() {
-      if (earth) {
-        earth.angle += earthData.speed;
+      if (mercury) setPlanetPosition(mercury, mercuryData);
+      if (venus) setPlanetPosition(venus, venusData);
+      if (earth) setPlanetPosition(earth, earthData);
+      if (mars) setPlanetPosition(mars, marsData);
+      if (jupiter) setPlanetPosition(jupiter, jupiterData);
+      if (saturn) setPlanetPosition(saturn, saturnData);
+      if (uranus) setPlanetPosition(uranus, uranusData);
+      if (neptune) setPlanetPosition(neptune, neptuneData);
 
-        earth.rotation.y += 0.05;
-        earth.position.x = Math.sin(earth.angle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
-        earth.position.z = Math.cos(earth.angle) * (earthData ? earthData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (mercury) {
-        mercury.angle += mercuryData.speed;
-        mercury.rotation.y += 0.05;
-        mercury.position.x = Math.sin(mercury.angle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
-        mercury.position.z = Math.cos(mercury.angle) * (mercuryData ? mercuryData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (venus) {
-        venus.angle += venusData.speed;
-        venus.rotation.y += 0.05;
-        venus.position.x = Math.sin(venus.angle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
-        venus.position.z = Math.cos(venus.angle) * (venusData ? venusData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (moon && earth) {
+      if (earth && moon) {
         moon.angle += moonData.speed;
-        moon.position.x = earth.position.x + Math.sin(moonData.angle!) * moonData.distance;
-        moon.position.z = earth.position.z + Math.cos(moonData.angle!) * moonData.distance;
-      }
-
-      if (mars) {
-        mars.angle += marsData.speed;
-        mars.rotation.y += 0.05;
-        mars.position.x = Math.sin(mars.angle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
-        mars.position.z = Math.cos(mars.angle) * (marsData ? marsData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (jupiter) {
-        jupiter.angle += jupiterData.speed;
-        jupiter.rotation.y += 0.05;
-        jupiter.position.x = Math.sin(jupiter.angle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
-        jupiter.position.z = Math.cos(jupiter.angle) * (jupiterData ? jupiterData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (saturn) {
-        saturn.angle += saturnData.speed;
-        saturn.rotation.y += 0.05;
-        saturn.position.x = Math.sin(saturn.angle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
-        saturn.position.z = Math.cos(saturn.angle) * (saturnData ? saturnData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (uranus) {
-        uranus.angle += uranusData.speed;
-        uranus.rotation.y += 0.05;
-        uranus.position.x = Math.sin(uranus.angle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
-        uranus.position.z = Math.cos(uranus.angle) * (uranusData ? uranusData.semimajorAxis / distanceDivider : 8);
-      }
-
-      if (neptune) {
-        neptune.angle += neptuneData.speed;
-        neptune.rotation.y += 0.05;
-        neptune.position.x = Math.sin(neptune.angle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
-        neptune.position.z = Math.cos(neptune.angle) * (neptuneData ? neptuneData.semimajorAxis / distanceDivider : 8);
+        moon.position.x = earth.position.x + Math.sin(moon.angle) * moonData.distance;
+        moon.position.z = earth.position.z + Math.cos(moon.angle) * moonData.distance;
       }
 
       // fps counting
@@ -596,7 +569,7 @@ insideWorker((event: any) => {
               newPlanetSpotLight.target = newPlanet;
               scene.add(newPlanetSpotLight);
               planetSpotLights.push(newPlanetSpotLight);
-  
+
               planetData.mesh = newPlanet;
 
               customPlanets.push(planetData);
@@ -609,14 +582,14 @@ insideWorker((event: any) => {
                 scene.remove(previewOrbit);
                 previewOrbit = null;
               }
-  
+
               if (showLines) {
                 const permanentOrbit = createOrbitLine(planetData);
                 permanentOrbit.name = planetData.englishName.toLowerCase().replace(' ', '') + 'Orbit';
-  
+
                 orbitLines.push(permanentOrbit);
               }
-  
+
               isAddingPlanet = false;
             });
           } else {
