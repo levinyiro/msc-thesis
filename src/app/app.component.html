@@ -22,7 +22,10 @@
         <div class="col-6">
           {{planet.englishName}}
         </div>
-        <div class="col-6">
+        <div class="col-6 d-flex">
+          <button *ngIf="planet.name !== 'sun'" (click)="followPlanet(planet)" class="btn btn-sm btn-primary me-2">
+            Follow
+          </button>
           <button *ngIf="planet.name !== 'sun'" (click)="deletePlanet(planet)" class="btn btn-sm btn-danger">
             Delete
           </button>

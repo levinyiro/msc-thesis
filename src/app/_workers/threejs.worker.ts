@@ -841,6 +841,15 @@ insideWorker((event: any) => {
           }
 
           break;
+
+        case 'followPlanet':
+          const followPlanetName = event.data.planetName.toLowerCase().replace(' ', '');
+          const object = scene.getObjectByName(followPlanetName);
+          if (object) {
+            changeTargetPlanet(object);
+          }
+
+          break;
       }
     };
   }

@@ -311,6 +311,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.monitorService.exportToCSV();
   }
 
+  sortPlanetsByDistance(): void {
+    this.planets.sort((a, b) => a.semimajorAxis - b.semimajorAxis);
+  }
+
   startAddingPlanet() {
     this.isAddingPlanet = true;
     this.newPlanetData = {
@@ -330,6 +334,15 @@ export class AppComponent implements OnInit, AfterViewInit {
         planetData: this.newPlanetData 
       });
     }
+
+    // get back list from worker
+    if (this.worker) {
+      this.worker.postMessage({ 
+        type: 'getPlanets', 
+        planetData: this.newPlanetData 
+      });
+    }
+    this.sortPlanetsByDistance();
   }
   
   private getRandomColor(): number {
@@ -344,9 +357,20 @@ export class AppComponent implements OnInit, AfterViewInit {
       });
     }
     this.planets = this.planets.filter(p => p !== planet);
+    this.sortPlanetsByDistance();
+  }
+
+  followPlanet(planet: Planet) {
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'followPlanet',
+        planetName: planet.englishName
+      });
+    }
   }
 
   toggleShowPlanetsList() {
+    this.sortPlanetsByDistance();
     this.showPlanetsList = !this.showPlanetsList;
   }
 
