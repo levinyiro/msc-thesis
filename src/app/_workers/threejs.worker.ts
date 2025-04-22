@@ -28,20 +28,20 @@ insideWorker((event: any) => {
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
     let yaw = 0, pitch = 0;
-    let orbitLines: any[] = [];
     const distanceDivider = 3000000;
-
+    
     // fps counting
     let frameCount = 0;
     let lastFpsUpdate = performance.now();
     let fps = 0;
-
+    
     // add new planet
     let isAddingPlanet = false;
     let previewPlanet: any | null = null;
     let previewOrbit: any | null = null;
-    const customPlanets: Planet[] = [];
 
+    let planets: Planet[] = [];
+    let orbitLines: any[] = [];
     let planetSpotLights: any[] = [];
 
     let targetObject: any;
@@ -202,7 +202,7 @@ insideWorker((event: any) => {
     }
 
     function getPlanetByEnglishName(name: string): any {      
-      return customPlanets.find(x => x.data!.englishName!.toLowerCase() === name);
+      return planets.find(x => x.data!.englishName!.toLowerCase() === name);
     }
 
     function createNewPlanet(planet: Planet, position: any, texture: any): any {
@@ -280,7 +280,7 @@ insideWorker((event: any) => {
     }
 
     if (showLines) {
-      customPlanets.forEach(x => {
+      planets.forEach(x => {
         createOrbitLine(x);
       })
     }
@@ -463,15 +463,6 @@ insideWorker((event: any) => {
     });
 
     function animate() {
-      // if (mercury) setPlanetPosition(mercury, mercuryData);
-      // if (venus) setPlanetPosition(venus, venusData);
-      // if (earth) setPlanetPosition(earth, earthData);
-      // if (mars) setPlanetPosition(mars, marsData);
-      // if (jupiter) setPlanetPosition(jupiter, jupiterData);
-      // if (saturn) setPlanetPosition(saturn, saturnData);
-      // if (uranus) setPlanetPosition(uranus, uranusData);
-      // if (neptune) setPlanetPosition(neptune, neptuneData);
-
       const earth = getPlanetByEnglishName('earth');
       if (earth && moon) {
         moon.mesh.angle += moon.data!.speed;
@@ -490,7 +481,7 @@ insideWorker((event: any) => {
         postMessage({ type: 'fps', fps: fps });
       }
 
-      customPlanets.forEach(planet => {
+      planets.forEach(planet => {
         setPlanetPosition(planet);
       });
 
@@ -584,7 +575,7 @@ insideWorker((event: any) => {
               scene.add(newPlanetSpotLight);
               planetSpotLights.push(newPlanetSpotLight);
 
-              customPlanets.push(newPlanet);
+              planets.push(newPlanet);
 
               if (previewPlanet) {
                 scene.remove(previewPlanet);
@@ -664,16 +655,12 @@ insideWorker((event: any) => {
           break;
 
         case 'toggleLines':
-          showLines = event.data.showLines;
+          const showLines = event.data.showLines;
 
-          orbitLines.forEach((line) => scene.remove(line));
-          orbitLines = [];
-
-          if (showLines) {
-            customPlanets.forEach(x => {
-              createOrbitLine(x);
-            });
-          }
+          orbitLines.forEach(orbitLine => {
+            showLines ? scene.add(orbitLine) : scene.remove(orbitLine);
+          })
+          
           break;
 
         // case 'update_canvas':
@@ -736,7 +723,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(mercury);
           mercury.data.speed = calculateSpeedFromVolatility(mercury, ANIMATION_SPEED);
-          customPlanets.push(mercury);
+          planets.push(mercury);
           break;
 
         case 'venusData':
@@ -746,7 +733,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(venus);
           venus.data.speed = calculateSpeedFromVolatility(venus, ANIMATION_SPEED);
-          customPlanets.push(venus)
+          planets.push(venus)
           break;
 
         case 'earthData':
@@ -756,7 +743,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(earth);
           earth.data.speed = calculateSpeedFromVolatility(earth, ANIMATION_SPEED);
-          customPlanets.push(earth);
+          planets.push(earth);
           break;
 
         case 'marsData':
@@ -766,7 +753,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(mars);
           mars.data.speed = calculateSpeedFromVolatility(mars, ANIMATION_SPEED);
-          customPlanets.push(mars);
+          planets.push(mars);
           break;
 
         case 'jupiterData':
@@ -776,7 +763,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(jupiter);
           jupiter.data.speed = calculateSpeedFromVolatility(jupiter, ANIMATION_SPEED);
-          customPlanets.push(jupiter);
+          planets.push(jupiter);
           break;
 
         case 'saturnData':
@@ -786,7 +773,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(saturn);
           saturn.data.speed = calculateSpeedFromVolatility(saturn, ANIMATION_SPEED);
-          customPlanets.push(saturn);
+          planets.push(saturn);
           break;
 
         case 'uranusData':
@@ -796,7 +783,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(uranus);
           uranus.data.speed = calculateSpeedFromVolatility(uranus, ANIMATION_SPEED);
-          customPlanets.push(uranus);
+          planets.push(uranus);
           break;
 
         case 'neptuneData':
@@ -806,7 +793,7 @@ insideWorker((event: any) => {
           if (orbitPath) scene.remove(orbitPath);
           createOrbitLine(neptune);
           neptune.data.speed = calculateSpeedFromVolatility(neptune, ANIMATION_SPEED);
-          customPlanets.push(neptune);
+          planets.push(neptune);
           break;
 
         case 'startAddingPlanet':
@@ -853,7 +840,11 @@ insideWorker((event: any) => {
           deleteObjectByName(planetName);
           deleteObjectByName(orbitName);
 
+          planets = planets.filter(p => p.mesh.name !== planetName);          
+          orbitLines = orbitLines.filter(p => p.name !== orbitName);
+          
           const planetSpotLight = scene.getObjectByName(`${planetName}SpotLight`);
+          planetSpotLights = planetSpotLights.filter(p => p.name !== planetSpotLight);
           if (planetSpotLight) {
             scene.remove(planetSpotLight);
             if (planetSpotLight.target) scene.remove(planetSpotLight.target);
