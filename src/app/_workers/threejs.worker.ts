@@ -176,7 +176,7 @@ insideWorker((event: any) => {
 
     function createPlanetSpotlight(name: string): any {
       const light = new THREE.SpotLight(0xffffff, 0.7);
-      light.castShadow = false;
+      light.castShadow = true;
       light.shadow.mapSize.width = 1024;
       light.shadow.mapSize.height = 1024;
       light.shadow.camera.near = 0.5;
