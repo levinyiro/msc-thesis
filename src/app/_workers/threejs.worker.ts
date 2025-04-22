@@ -13,8 +13,8 @@ insideWorker((event: any) => {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, canvas.width / canvas.height, 0.1, 1000);
-    camera.position.z = 100;
-    camera.position.y = 20;
+    camera.position.z = 200;
+    camera.position.y = 40;
     camera.rotation.x = -0.3;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
