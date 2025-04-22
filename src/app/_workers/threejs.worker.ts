@@ -729,7 +729,8 @@ insideWorker((event: any) => {
           break;
 
         case 'mercuryData':
-          const mercury: Planet = {}
+          const mercury: any = {};
+          
           mercury.data = event.data.mercuryData as Planet;
           mercury.data.color = 0xe7e8ec;
           if (orbitPath) scene.remove(orbitPath);
@@ -739,7 +740,7 @@ insideWorker((event: any) => {
           break;
 
         case 'venusData':
-          const venus: Planet = {};
+          const venus: any = {};
           venus.data = event.data.venusData as Planet;
           venus.data.color = 0xeecb8b;
           if (orbitPath) scene.remove(orbitPath);
@@ -749,7 +750,7 @@ insideWorker((event: any) => {
           break;
 
         case 'earthData':
-          const earth: Planet = {};
+          const earth: any = {};
           earth.data = event.data.earthData as Planet;
           earth.data.color = 0x6b93d6;
           if (orbitPath) scene.remove(orbitPath);
@@ -759,7 +760,7 @@ insideWorker((event: any) => {
           break;
 
         case 'marsData':
-          const mars: Planet = {};
+          const mars: any = {};
           mars.data = event.data.marsData as Planet;
           mars.data.color = 0x993d00;
           if (orbitPath) scene.remove(orbitPath);
@@ -769,7 +770,7 @@ insideWorker((event: any) => {
           break;
 
         case 'jupiterData':
-          const jupiter: Planet = {};
+          const jupiter: any = {};
           jupiter.data = event.data.jupiterData as Planet;
           jupiter.data.color = 0xb07f35;
           if (orbitPath) scene.remove(orbitPath);
@@ -779,7 +780,7 @@ insideWorker((event: any) => {
           break;
 
         case 'saturnData':
-          const saturn: Planet = {};
+          const saturn: any = {};
           saturn.data = event.data.saturnData as Planet;
           saturn.data.color = 0xb08f36;
           if (orbitPath) scene.remove(orbitPath);
@@ -789,7 +790,7 @@ insideWorker((event: any) => {
           break;
 
         case 'uranusData':
-          const uranus: Planet = {};
+          const uranus: any = {};
           uranus.data = event.data.uranusData as Planet;
           uranus.data.color = 0x5580aa;
           if (orbitPath) scene.remove(orbitPath);
@@ -799,7 +800,7 @@ insideWorker((event: any) => {
           break;
 
         case 'neptuneData':
-          const neptune: Planet = {};
+          const neptune: any = {};
           neptune.data = event.data.neptuneData as Planet;
           neptune.data.color = 0x366896;
           if (orbitPath) scene.remove(orbitPath);

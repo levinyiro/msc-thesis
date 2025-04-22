@@ -10,7 +10,7 @@ export interface Planet {
     size?: number;
     semimajorAxis?: any;
     speed?: any;
-    mesh?: any;
+    // mesh?: any;
     angle?: number;
     sideralOrbit?: any;
     distance?: any;
@@ -20,4 +20,4 @@ export interface Planet {
     };
   },
   mesh?: any;
-}  
+}
