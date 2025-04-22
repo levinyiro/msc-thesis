@@ -20,8 +20,10 @@ insideWorker((event: any) => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
 
-    let sun: any, earth: any, orbitPath: any, mercury: any, venus: any = null, mars: any = null, jupiter: any = null, saturn: any = null, uranus: any = null, neptune: any = null, moon: any = null;
-    let earthData: Planet, mercuryData: Planet, venusData: Planet, marsData: Planet, jupiterData: Planet, saturnData: Planet, uranusData: Planet, neptuneData: Planet, moonData: Planet = { speed: 0.005, angle: 0, distance: 2 };
+    let sun: any;
+    let orbitPath: any;
+    let moon: Planet = {data: {distance: 2, speed: 0.005, angle: 0}};
+    // let earthData: Planet, mercuryData: Planet, venusData: Planet, marsData: Planet, jupiterData: Planet, saturnData: Planet, uranusData: Planet, neptuneData: Planet, moonData: Planet = { speed: 0.005, angle: 0, distance: 2 };
 
     let showLines = true;
     let isDragging = false;
@@ -68,11 +70,11 @@ insideWorker((event: any) => {
       }
     }
 
-    function createOrbitLine(data: Planet): any {
-      if (!data) return null;
+    function createOrbitLine(planet: Planet): any {
+      if (!planet) return null;
     
-      const semiMajorAxis = data.semimajorAxis / distanceDivider;
-      const eccentricity = data.eccentricity || 0;
+      const semiMajorAxis = planet.data!.semimajorAxis / distanceDivider;
+      const eccentricity = planet.data!.eccentricity || 0;
       const focalDistance = semiMajorAxis * eccentricity;
       
       const points = [];
@@ -87,10 +89,10 @@ insideWorker((event: any) => {
       }
     
       const orbitPathGeometry = new THREE.BufferGeometry().setFromPoints(points);
-      const orbitPathMaterial = new THREE.LineBasicMaterial({ color: data.color });
+      const orbitPathMaterial = new THREE.LineBasicMaterial({ color: planet.data!.color });
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
             
-      orbitPath.name = data.englishName?.toLowerCase().replace(' ', '') + 'Orbit';
+      orbitPath.name = planet.data!.englishName?.toLowerCase().replace(' ', '') + 'Orbit';
     
       scene.add(orbitPath);
       orbitLines.push(orbitPath);
@@ -189,30 +191,36 @@ insideWorker((event: any) => {
       return light;
     }
 
-    function getInitialAngle(planetData: Planet, date: Date): number {
-      const T = planetData.sideralOrbit; // keringési idő napokban
-      const n = 2 * Math.PI / T; // középmozgás radian/nap
-      const J2000 = new Date('2000-01-01T12:00:00Z'); // alap dátum
+    function getInitialAngle(planet: Planet, date: Date): number {
+      const T = planet.data!.sideralOrbit;
+      const n = 2 * Math.PI / T;
+      const J2000 = new Date('2000-01-01T12:00:00Z');
 
       const daysSinceEpoch = (date.getTime() - J2000.getTime()) / (1000 * 60 * 60 * 24);
       const M = n * daysSinceEpoch;
 
-      return M % (2 * Math.PI); // közép-anomália radiánban, mint kiinduló szög
+      return M % (2 * Math.PI);
     }
 
-    function createNewPlanet(data: Planet, position: any, texture: any): any {
-      const geometry = new THREE.SphereGeometry(data.size || 0.3, 32, 32);
+    function getPlanetByEnglishName(name: string): any {      
+      return customPlanets.find(x => x.data!.englishName!.toLowerCase() === name);
+    }
+
+    function createNewPlanet(planet: Planet, position: any, texture: any): any {
+      const geometry = new THREE.SphereGeometry(planet.data!.size || 0.3, 32, 32);
 
       const material = new THREE.MeshPhongMaterial({
         map: texture,
       });
 
-      const planet = new THREE.Mesh(geometry, material);
-      planet.position.copy(position);
-      planet.rotation.z = getAxialTilt(data.axialTilt || 0);
-      planet.castShadow = true;
-      planet.receiveShadow = true;
-      planet.name = data.englishName?.toLowerCase().replace(' ', '');
+      planet.mesh = new THREE.Mesh(geometry, material);
+      planet.mesh.angle = planet.data!.angle || 0;
+      planet.mesh.position.copy(position);
+      planet.mesh.rotation.z = getAxialTilt(planet.data!.axialTilt || 0);
+      planet.mesh.castShadow = true;
+      planet.mesh.receiveShadow = true;
+      
+      planet.mesh.name = planet.data!.englishName?.toLowerCase().replace(' ', '');
 
       return planet;
     }
@@ -255,32 +263,27 @@ insideWorker((event: any) => {
       cameraTargetPosition.copy(newCameraPosition);
     }
 
-    function setPlanetPosition(planet: any, planetData: Planet) {
-      if (!planetData) return;
+    function setPlanetPosition(planet: Planet) {
+      if (!planet.data) return;
 
-      planet.angle -= planetData.speed;
-      planet.rotation.y += 0.05;
+      planet.mesh.angle -= planet.data.speed;
+      planet.mesh.rotation.y += 0.05;
 
-      const semiMajorAxis = planetData.semimajorAxis / distanceDivider;
-      const eccentricity = planetData.eccentricity || 0;
+      const semiMajorAxis = planet.data.semimajorAxis / distanceDivider;
+      const eccentricity = planet.data.eccentricity || 0;
       const focalDistance = semiMajorAxis * eccentricity;
 
       const r = (semiMajorAxis * (1 - eccentricity * eccentricity)) /
-        (1 + eccentricity * Math.cos(planet.angle));
+        (1 + eccentricity * Math.cos(planet.mesh.angle));
 
-      planet.position.x = r * Math.cos(planet.angle) - focalDistance;
-      planet.position.z = r * Math.sin(planet.angle);
+      planet.mesh.position.x = r * Math.cos(planet.mesh.angle) - focalDistance;
+      planet.mesh.position.z = r * Math.sin(planet.mesh.angle);
     }
 
     if (showLines) {
-      createOrbitLine(earthData!);
-      createOrbitLine(venusData!);
-      createOrbitLine(mercuryData!);
-      createOrbitLine(marsData!);
-      createOrbitLine(jupiterData!);
-      createOrbitLine(saturnData!);
-      createOrbitLine(uranusData!);
-      createOrbitLine(neptuneData!);
+      customPlanets.forEach(x => {
+        createOrbitLine(x);
+      })
     }
 
     loadTextures().then(textures => {
@@ -313,17 +316,19 @@ insideWorker((event: any) => {
       earthTexture.repeat.set(1, -1);
       const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
       const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
-      earth = new THREE.Mesh(earthGeometry, earthMaterial);
-      earth.rotation.z = getAxialTilt(earthData?.axialTilt);
-      earth.castShadow = true;
-      earth.receiveShadow = true;
-      earth.name = 'earth';
-      const earthSpotLight = createPlanetSpotlight(earth.name);
-      earthSpotLight.target = earth;
+      const earth: Planet = getPlanetByEnglishName('earth');
+      
+      earth.mesh = new THREE.Mesh(earthGeometry, earthMaterial);
+      earth.mesh.rotation.z = getAxialTilt(earth.data?.axialTilt);
+      earth.mesh.castShadow = true;
+      earth.mesh.receiveShadow = true;
+      earth.mesh.name = 'earth';
+      const earthSpotLight = createPlanetSpotlight(earth.mesh.name);
+      earthSpotLight.target = earth.mesh;
       scene.add(earthSpotLight);
       planetSpotLights.push(earthSpotLight);
-      earth.angle = getInitialAngle(earthData, new Date());
-      scene.add(earth);
+      earth.mesh.angle = getInitialAngle(earth, new Date());
+      scene.add(earth.mesh);
 
       const moonTexture = new THREE.Texture(moonBitmap);
       moonTexture.needsUpdate = true;
@@ -332,18 +337,17 @@ insideWorker((event: any) => {
       moonTexture.repeat.set(1, -1);
       const moonGeometry = new THREE.SphereGeometry(0.1, 32, 32);
       const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
-      moon = new THREE.Mesh(moonGeometry, moonMaterial);
+      moon.mesh = new THREE.Mesh(moonGeometry, moonMaterial);
+      moon.mesh.position.x = earth.mesh.position.x + moon.data!.distance;
+      moon.mesh.position.z = earth.mesh.position.z;
+      moon.mesh.castShadow = true;
+      moon.mesh.receiveShadow = true;
+      moon.mesh.name = 'moon';
+      moon.mesh.angle = moon.data!.angle;
+      scene.add(moon.mesh);
 
-      moon.position.x = earth.position.x + moonData.distance;
-      moon.position.z = earth.position.z;
-      moon.castShadow = true;
-      moon.receiveShadow = true;
-      moon.name = 'moon';
-      moon.angle = moonData.angle;
-      scene.add(moon);
-
-      const moonSpotLight = createPlanetSpotlight(moon.name);
-      moonSpotLight.target = moon;
+      const moonSpotLight = createPlanetSpotlight(moon.mesh.name);
+      moonSpotLight.target = moon.mesh;
       scene.add(moonSpotLight);
       planetSpotLights.push(moonSpotLight);
 
@@ -352,13 +356,14 @@ insideWorker((event: any) => {
       mercuryTexture.needsUpdate = true;
       const mercuryGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const mercuryMaterial = new THREE.MeshPhongMaterial({ map: mercuryTexture });
-      mercury = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
-      mercury.rotation.z = getAxialTilt(mercuryData?.axialTilt);
-      mercury.name = 'mercury';
-      mercury.angle = getInitialAngle(mercuryData, new Date());
-      scene.add(mercury);
-      const mercurySpotLight = createPlanetSpotlight(mercury.name);
-      mercurySpotLight.target = mercury;
+      const mercury: Planet = getPlanetByEnglishName('mercury');
+      mercury.mesh = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
+      mercury.mesh.rotation.z = getAxialTilt(mercury.data?.axialTilt);
+      mercury.mesh.name = 'mercury';
+      mercury.mesh.angle = getInitialAngle(mercury, new Date());
+      scene.add(mercury.mesh);
+      const mercurySpotLight = createPlanetSpotlight(mercury.mesh.name);
+      mercurySpotLight.target = mercury.mesh;
       scene.add(mercurySpotLight);
       planetSpotLights.push(mercurySpotLight);
 
@@ -367,13 +372,14 @@ insideWorker((event: any) => {
       venusTexture.needsUpdate = true;
       const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
       const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
-      venus = new THREE.Mesh(venusGeometry, venusMaterial);
-      venus.rotation.z = getAxialTilt(venusData?.axialTilt);
-      venus.name = 'venus';
-      venus.angle = getInitialAngle(venusData, new Date());
-      scene.add(venus);
-      const venusSpotLight = createPlanetSpotlight(venus.name);
-      venusSpotLight.target = venus;
+      const venus: Planet = getPlanetByEnglishName('venus');
+      venus.mesh = new THREE.Mesh(venusGeometry, venusMaterial);
+      venus.mesh.rotation.z = getAxialTilt(venus.data?.axialTilt);
+      venus.mesh.name = 'venus';
+      venus.mesh.angle = getInitialAngle(venus, new Date());
+      scene.add(venus.mesh);
+      const venusSpotLight = createPlanetSpotlight(venus.mesh.name);
+      venusSpotLight.target = venus.mesh;
       scene.add(venusSpotLight);
       planetSpotLights.push(venusSpotLight);
 
@@ -381,13 +387,14 @@ insideWorker((event: any) => {
       marsTexture.needsUpdate = true;
       const marsGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
-      mars = new THREE.Mesh(marsGeometry, marsMaterial);
-      mars.rotation.z = getAxialTilt(marsData?.axialTilt);
-      mars.name = 'mars';
-      mars.angle = getInitialAngle(marsData, new Date());
-      scene.add(mars);
-      const marsSpotLight = createPlanetSpotlight(mars.name);
-      marsSpotLight.target = mars;
+      const mars: Planet = getPlanetByEnglishName('mars');
+      mars.mesh = new THREE.Mesh(marsGeometry, marsMaterial);
+      mars.mesh.rotation.z = getAxialTilt(mars.data?.axialTilt);
+      mars.mesh.name = 'mars';
+      mars.mesh.angle = getInitialAngle(mars, new Date());
+      scene.add(mars.mesh);
+      const marsSpotLight = createPlanetSpotlight(mars.mesh.name);
+      marsSpotLight.target = mars.mesh;
       scene.add(marsSpotLight);
       planetSpotLights.push(marsSpotLight);
 
@@ -395,13 +402,14 @@ insideWorker((event: any) => {
       jupiterTexture.needsUpdate = true;
       const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
-      jupiter = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
-      jupiter.rotation.z = getAxialTilt(jupiterData?.axialTilt);
-      jupiter.name = 'jupiter';
-      jupiter.angle = getInitialAngle(jupiterData, new Date());
-      scene.add(jupiter);
-      const jupiterSpotLight = createPlanetSpotlight(jupiter.name);
-      jupiterSpotLight.target = jupiter;
+      const jupiter: Planet = getPlanetByEnglishName('jupiter');
+      jupiter.mesh = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
+      jupiter.mesh.rotation.z = getAxialTilt(jupiter.data?.axialTilt);
+      jupiter.mesh.name = 'jupiter';
+      jupiter.mesh.angle = getInitialAngle(jupiter, new Date());
+      scene.add(jupiter.mesh);
+      const jupiterSpotLight = createPlanetSpotlight(jupiter.mesh.name);
+      jupiterSpotLight.target = jupiter.mesh;
       scene.add(jupiterSpotLight);
       planetSpotLights.push(jupiterSpotLight);
 
@@ -409,13 +417,14 @@ insideWorker((event: any) => {
       saturnTexture.needsUpdate = true;
       const saturnGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
-      saturn = new THREE.Mesh(saturnGeometry, saturnMaterial);
-      saturn.rotation.z = getAxialTilt(saturnData?.axialTilt);
-      saturn.name = 'saturn';
-      saturn.angle = getInitialAngle(saturnData, new Date());
-      scene.add(saturn);
-      const saturnSpotLight = createPlanetSpotlight(saturn.name);
-      saturnSpotLight.target = saturn;
+      const saturn: Planet = getPlanetByEnglishName('saturn');
+      saturn.mesh = new THREE.Mesh(saturnGeometry, saturnMaterial);
+      saturn.mesh.rotation.z = getAxialTilt(saturn.data?.axialTilt);
+      saturn.mesh.name = 'saturn';
+      saturn.mesh.angle = getInitialAngle(saturn, new Date());
+      scene.add(saturn.mesh);
+      const saturnSpotLight = createPlanetSpotlight(saturn.mesh.name);
+      saturnSpotLight.target = saturn.mesh;
       scene.add(saturnSpotLight);
       planetSpotLights.push(saturnSpotLight);
 
@@ -423,27 +432,29 @@ insideWorker((event: any) => {
       uranusTexture.needsUpdate = true;
       const uranusGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
-      uranus = new THREE.Mesh(uranusGeometry, uranusMaterial);
-      uranus.rotation.z = getAxialTilt(uranusData?.axialTilt);
-      uranus.name = 'uranus'
-      uranus.angle = getInitialAngle(uranusData, new Date());
-      scene.add(uranus);
-      const uranusSpotLight = createPlanetSpotlight(uranus.name);
-      uranusSpotLight.target = uranus;
+      const uranus: Planet = getPlanetByEnglishName('uranus');
+      uranus.mesh = new THREE.Mesh(uranusGeometry, uranusMaterial);
+      uranus.mesh.rotation.z = getAxialTilt(uranus.data?.axialTilt);
+      uranus.mesh.name = 'uranus'
+      uranus.mesh.angle = getInitialAngle(uranus, new Date());
+      scene.add(uranus.mesh);
+      const uranusSpotLight = createPlanetSpotlight(uranus.mesh.name);
+      uranusSpotLight.target = uranus.mesh;
       scene.add(uranusSpotLight);
-      planetSpotLights.push(uranusSpotLight); uranus
+      planetSpotLights.push(uranusSpotLight);
 
       const neptuneTexture = new THREE.Texture(neptuneBitmap);
       neptuneTexture.needsUpdate = true;
       const neptuneGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
-      neptune = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
-      neptune.rotation.z = getAxialTilt(neptuneData?.axialTilt);
-      neptune.name = 'neptune'
-      neptune.angle = getInitialAngle(neptuneData, new Date());
-      scene.add(neptune);
-      const neptuneSpotLight = createPlanetSpotlight(neptune.name);
-      neptuneSpotLight.target = neptune;
+      const neptune: Planet = getPlanetByEnglishName('neptune');
+      neptune.mesh = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
+      neptune.mesh.rotation.z = getAxialTilt(neptune.data?.axialTilt);
+      neptune.mesh.name = 'neptune'
+      neptune.mesh.angle = getInitialAngle(neptune, new Date());
+      scene.add(neptune.mesh);
+      const neptuneSpotLight = createPlanetSpotlight(neptune.mesh.name);
+      neptuneSpotLight.target = neptune.mesh;
       scene.add(neptuneSpotLight);
       planetSpotLights.push(neptuneSpotLight);
 
@@ -453,19 +464,20 @@ insideWorker((event: any) => {
     });
 
     function animate() {
-      if (mercury) setPlanetPosition(mercury, mercuryData);
-      if (venus) setPlanetPosition(venus, venusData);
-      if (earth) setPlanetPosition(earth, earthData);
-      if (mars) setPlanetPosition(mars, marsData);
-      if (jupiter) setPlanetPosition(jupiter, jupiterData);
-      if (saturn) setPlanetPosition(saturn, saturnData);
-      if (uranus) setPlanetPosition(uranus, uranusData);
-      if (neptune) setPlanetPosition(neptune, neptuneData);
+      // if (mercury) setPlanetPosition(mercury, mercuryData);
+      // if (venus) setPlanetPosition(venus, venusData);
+      // if (earth) setPlanetPosition(earth, earthData);
+      // if (mars) setPlanetPosition(mars, marsData);
+      // if (jupiter) setPlanetPosition(jupiter, jupiterData);
+      // if (saturn) setPlanetPosition(saturn, saturnData);
+      // if (uranus) setPlanetPosition(uranus, uranusData);
+      // if (neptune) setPlanetPosition(neptune, neptuneData);
 
+      const earth = getPlanetByEnglishName('earth');
       if (earth && moon) {
-        moon.angle += moonData.speed;
-        moon.position.x = earth.position.x + Math.sin(moon.angle) * moonData.distance;
-        moon.position.z = earth.position.z + Math.cos(moon.angle) * moonData.distance;
+        moon.mesh.angle += moon.data!.speed;
+        moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance;
+        moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance;
       }
 
       // fps counting
@@ -480,11 +492,7 @@ insideWorker((event: any) => {
       }
 
       customPlanets.forEach(planet => {
-        planet.angle += planet.speed;
-        const orbitRadius = planet.semimajorAxis! / distanceDivider;
-        planet.mesh.position.x = Math.sin(planet.angle!) * orbitRadius;
-        planet.mesh.position.z = Math.cos(planet.angle!) * orbitRadius;
-        planet.mesh.rotation.y += 0.05;
+        setPlanetPosition(planet);
       });
 
 
@@ -523,30 +531,32 @@ insideWorker((event: any) => {
           }
 
           if (isAddingPlanet) {
-            const { planetData } = event.data;
-
+            let planet: Planet = {};
+            planet.data = event.data.planetData;
+            // planet.data = event.data.planetData;            
+            
             const position = previewPlanet?.position.clone() ?? new THREE.Vector3(10, 0, 0);
             const orbitDistance = calculateOrbitDistance(position);
 
-            planetData.color = typeof planetData.color === 'string'
-              ? parseInt(planetData.color.replace('#', '0x'))
-              : typeof planetData.color === 'number'
-                ? planetData.color
+            planet.data!.color = typeof planet.data!.color === 'string'
+              ? parseInt(planet.data!.color.replace('#', '0x'))
+              : typeof planet.data!.color === 'number'
+                ? planet.data!.color
                 : 0xfff000;
 
-            planetData.semimajorAxis = orbitDistance;
-            planetData.perihelion = orbitDistance;
-            planetData.aphelion = orbitDistance;
-            planetData.eccentricity ??= 0;
-            planetData.axialTilt ??= 0;
-            planetData.size ??= 0.3;
-            planetData.mass = {
+            planet.data!.semimajorAxis = orbitDistance;
+            planet.data!.perihelion = orbitDistance;
+            planet.data!.aphelion = orbitDistance;
+            planet.data!.eccentricity ??= 0;
+            planet.data!.axialTilt ??= 0;
+            planet.data!.size ??= 0.3;
+            planet.data!.mass = {
               massValue: 1,
               massExponent: 24
             };
 
-            planetData.angle = Math.atan2(position.z, position.x);
-            planetData.speed = calculateSpeedFromVolatility(planetData, ANIMATION_SPEED);
+            planet.data!.angle = Math.atan2(position.z, position.x);
+            planet.data!.speed = calculateSpeedFromVolatility(planet.data!, ANIMATION_SPEED);
 
             const estimatedTemperature = estimateAvgTemperature(calculateOrbitDistance(position));
             let texturePath = '';
@@ -562,17 +572,20 @@ insideWorker((event: any) => {
             }
 
             loadTextureWithFetch(texturePath).then((texture) => {
-              const newPlanet = createNewPlanet(planetData, position, texture);
-              scene.add(newPlanet);
+              const newPlanet = createNewPlanet(planet, position, texture);
+              newPlanet.data = planet.data;
 
-              const newPlanetSpotLight = createPlanetSpotlight(newPlanet.name);
-              newPlanetSpotLight.target = newPlanet;
+              console.log(newPlanet);
+              
+              
+              scene.add(newPlanet.mesh);
+              
+              const newPlanetSpotLight = createPlanetSpotlight(newPlanet.mesh.name);
+              newPlanetSpotLight.target = newPlanet.mesh;
               scene.add(newPlanetSpotLight);
               planetSpotLights.push(newPlanetSpotLight);
 
-              planetData.mesh = newPlanet;
-
-              customPlanets.push(planetData);
+              customPlanets.push(newPlanet);
 
               if (previewPlanet) {
                 scene.remove(previewPlanet);
@@ -584,8 +597,8 @@ insideWorker((event: any) => {
               }
 
               if (showLines) {
-                const permanentOrbit = createOrbitLine(planetData);
-                permanentOrbit.name = planetData.englishName.toLowerCase().replace(' ', '') + 'Orbit';
+                const permanentOrbit = createOrbitLine(newPlanet);
+                permanentOrbit.name = newPlanet.data!.englishName!.toLowerCase().replace(' ', '') + 'Orbit';
 
                 orbitLines.push(permanentOrbit);
               }
@@ -637,14 +650,14 @@ insideWorker((event: any) => {
 
             if (previewOrbit) scene.remove(previewOrbit);
 
-            const orbitData: Planet = {
+            const orbitData: Planet = {data: {
               semimajorAxis: calculateOrbitDistance(pos),
               perihelion: calculateOrbitDistance(pos),
               aphelion: calculateOrbitDistance(pos),
               eccentricity: 0,
               color: 0xfff000,
               axialTilt: 0
-            };
+            }};
 
             if (previewOrbit) scene.remove(previewOrbit);
             previewOrbit = createOrbitLine(orbitData);
@@ -658,14 +671,9 @@ insideWorker((event: any) => {
           orbitLines = [];
 
           if (showLines) {
-            if (earthData) createOrbitLine(earthData);
-            if (venusData) createOrbitLine(venusData);
-            if (mercuryData) createOrbitLine(mercuryData);
-            if (marsData) createOrbitLine(marsData);
-            if (jupiterData) createOrbitLine(jupiterData);
-            if (saturnData) createOrbitLine(saturnData);
-            if (uranusData) createOrbitLine(uranusData);
-            if (neptuneData) createOrbitLine(neptuneData);
+            customPlanets.forEach(x => {
+              createOrbitLine(x);
+            });
           }
           break;
 
@@ -722,67 +730,83 @@ insideWorker((event: any) => {
           break;
 
         case 'mercuryData':
-          mercuryData = event.data.mercuryData as Planet;
-          mercuryData.color = 0xe7e8ec;
+          const mercury: Planet = {}
+          mercury.data = event.data.mercuryData as Planet;
+          mercury.data.color = 0xe7e8ec;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(mercuryData);
-          mercuryData.speed = calculateSpeedFromVolatility(mercuryData, ANIMATION_SPEED);
+          createOrbitLine(mercury);
+          mercury.data.speed = calculateSpeedFromVolatility(mercury, ANIMATION_SPEED);
+          customPlanets.push(mercury);
           break;
 
         case 'venusData':
-          venusData = event.data.venusData as Planet;
-          venusData.color = 0xeecb8b;
+          const venus: Planet = {};
+          venus.data = event.data.venusData as Planet;
+          venus.data.color = 0xeecb8b;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(venusData);
-          venusData.speed = calculateSpeedFromVolatility(venusData, ANIMATION_SPEED);
+          createOrbitLine(venus);
+          venus.data.speed = calculateSpeedFromVolatility(venus, ANIMATION_SPEED);
+          customPlanets.push(venus)
           break;
 
         case 'earthData':
-          earthData = event.data.earthData as Planet;
-          earthData.color = 0x6b93d6;
+          const earth: Planet = {};
+          earth.data = event.data.earthData as Planet;
+          earth.data.color = 0x6b93d6;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(earthData);
-          earthData.speed = calculateSpeedFromVolatility(earthData, ANIMATION_SPEED);
+          createOrbitLine(earth);
+          earth.data.speed = calculateSpeedFromVolatility(earth, ANIMATION_SPEED);
+          customPlanets.push(earth);
           break;
 
         case 'marsData':
-          marsData = event.data.marsData as Planet;
-          marsData.color = 0x993d00;
+          const mars: Planet = {};
+          mars.data = event.data.marsData as Planet;
+          mars.data.color = 0x993d00;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(marsData);
-          marsData.speed = calculateSpeedFromVolatility(marsData, ANIMATION_SPEED);
+          createOrbitLine(mars);
+          mars.data.speed = calculateSpeedFromVolatility(mars, ANIMATION_SPEED);
+          customPlanets.push(mars);
           break;
 
         case 'jupiterData':
-          jupiterData = event.data.jupiterData as Planet;
-          jupiterData.color = 0xb07f35;
+          const jupiter: Planet = {};
+          jupiter.data = event.data.jupiterData as Planet;
+          jupiter.data.color = 0xb07f35;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(jupiterData);
-          jupiterData.speed = calculateSpeedFromVolatility(jupiterData, ANIMATION_SPEED);
+          createOrbitLine(jupiter);
+          jupiter.data.speed = calculateSpeedFromVolatility(jupiter, ANIMATION_SPEED);
+          customPlanets.push(jupiter);
           break;
 
         case 'saturnData':
-          saturnData = event.data.saturnData as Planet;
-          saturnData.color = 0xb08f36;
+          const saturn: Planet = {};
+          saturn.data = event.data.saturnData as Planet;
+          saturn.data.color = 0xb08f36;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(saturnData);
-          saturnData.speed = calculateSpeedFromVolatility(saturnData, ANIMATION_SPEED);
+          createOrbitLine(saturn);
+          saturn.data.speed = calculateSpeedFromVolatility(saturn, ANIMATION_SPEED);
+          customPlanets.push(saturn);
           break;
 
         case 'uranusData':
-          uranusData = event.data.uranusData as Planet;
-          uranusData.color = 0x5580aa;
+          const uranus: Planet = {};
+          uranus.data = event.data.uranusData as Planet;
+          uranus.data.color = 0x5580aa;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(uranusData);
-          uranusData.speed = calculateSpeedFromVolatility(uranusData, ANIMATION_SPEED);
+          createOrbitLine(uranus);
+          uranus.data.speed = calculateSpeedFromVolatility(uranus, ANIMATION_SPEED);
+          customPlanets.push(uranus);
           break;
 
         case 'neptuneData':
-          neptuneData = event.data.neptuneData as Planet;
-          neptuneData.color = 0x366896;
+          const neptune: Planet = {};
+          neptune.data = event.data.neptuneData as Planet;
+          neptune.data.color = 0x366896;
           if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(neptuneData);
-          neptuneData.speed = calculateSpeedFromVolatility(neptuneData, ANIMATION_SPEED);
+          createOrbitLine(neptune);
+          neptune.data.speed = calculateSpeedFromVolatility(neptune, ANIMATION_SPEED);
+          customPlanets.push(neptune);
           break;
 
         case 'startAddingPlanet':

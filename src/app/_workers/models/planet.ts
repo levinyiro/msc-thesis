@@ -1,4 +1,5 @@
 export interface Planet {
+  data?: {
     name?: string;
     englishName?: string;
     perihelion?: any;
@@ -17,4 +18,6 @@ export interface Planet {
       massValue: number;
       massExponent: number;
     };
+  },
+  mesh?: any;
 }  

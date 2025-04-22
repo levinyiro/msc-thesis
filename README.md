@@ -184,3 +184,5 @@ Ez az egyenlet azt jelenti, hogy:
 - Közel jól illeszkedik a Merkúr, Föld és Mars hőmérsékleti és távolságadataira.
 
 Ha szeretnéd, kiszámolhatjuk vele más bolygók (pl. Vénusz, Jupiter stb.) becsült hőmérsékletét is, vagy akár megnézhetjük, hogy egy bizonyos hőmérséklethez mekkora távolság tartozik.
+
+# angle mit jelent?

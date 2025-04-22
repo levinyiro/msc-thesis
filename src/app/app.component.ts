@@ -31,7 +31,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   isAddingPlanet = false;
   newPlanetData: any = {};
 
-  planets: Planet[] = [];
+  planets: any[] = [];
   showPlanetsList: boolean = false;
 
   constructor(private dataService: DataService, private monitorService: MonitorService) { }
@@ -312,7 +312,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   sortPlanetsByDistance(): void {
-    this.planets.sort((a, b) => a.semimajorAxis - b.semimajorAxis);
+    // this.planets.sort((a, b) => {
+    //   const aAxis = a.data?.semimajorAxis ?? 0;
+    //   const bAxis = b.data?.semimajorAxis ?? 0;
+    //   return aAxis - bAxis;
+    // });
   }
 
   startAddingPlanet() {
@@ -349,7 +353,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     return Math.floor(Math.random() * 0xffffff);
   }
 
-  deletePlanet(planet: Planet) {
+  deletePlanet(planet: any) {
     if (this.worker) {
       this.worker.postMessage({
         type: 'deletePlanet',
@@ -360,7 +364,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.sortPlanetsByDistance();
   }
 
-  followPlanet(planet: Planet) {
+  followPlanet(planet: any) {
     if (this.worker) {
       this.worker.postMessage({
         type: 'followPlanet',
@@ -371,6 +375,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   toggleShowPlanetsList() {
     this.sortPlanetsByDistance();
+    
     this.showPlanetsList = !this.showPlanetsList;
   }
 
