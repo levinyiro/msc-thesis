@@ -1,4 +1,3 @@
-// src/app/services/monitor.service.ts
 import { Injectable } from '@angular/core';
 
 @Injectable({

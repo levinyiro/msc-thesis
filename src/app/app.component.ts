@@ -1,7 +1,6 @@
 import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from './services/data.service';
 import { MonitorService } from './services/monitor.service';
-import { Planet } from './_workers/models/planet';
 
 @Component({
   selector: 'app-root',
@@ -154,13 +153,13 @@ export class AppComponent implements OnInit, AfterViewInit {
     measureGPU();
   
     this.loggingInterval = setInterval(() => {
-      let cpuUsage = 0;
+      let cpuUsage;
   
       if (typeof performance !== 'undefined' && (performance as any).memory) {
         const memoryInfo = (performance as any).memory;
         const totalJSHeap = memoryInfo.totalJSHeapSize;
         const usedJSHeap = memoryInfo.usedJSHeapSize;
-        cpuUsage = totalJSHeap > 0 ? (usedJSHeap / totalJSHeap) * 100 : 0;
+        cpuUsage = (totalJSHeap > 0 ? (usedJSHeap / totalJSHeap) * 100 : 0).toFixed(2);
       }
   
       let memoryUsage = 0;
@@ -176,10 +175,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   
       const finalGpuUsage = ((gpuScore + gpuUsageFromFPS) / 2).toFixed(2);
   
-      this.monitorService.logMetrics(cpuUsage, memoryUsage, Number(this.fps), Number(finalGpuUsage));
+      this.monitorService.logMetrics(Number(cpuUsage), memoryUsage, Number(this.fps), Number(finalGpuUsage));
   
       this.memoryUsage = `${memoryUsage} MB`;
-      this.cpuUsage = `${cpuUsage.toFixed(2)}%`;
+      this.cpuUsage = `${cpuUsage}%`;
       this.gpuUsage = `${finalGpuUsage}%`;
   
     }, 1000);

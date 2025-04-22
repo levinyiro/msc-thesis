@@ -17,13 +17,12 @@ insideWorker((event: any) => {
     camera.position.y = 40;
     camera.rotation.x = -0.3;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     scene.add(ambientLight);
 
     let sun: any;
     let orbitPath: any;
     let moon: Planet = {data: {distance: 2, speed: 0.005, angle: 0}};
-    // let earthData: Planet, mercuryData: Planet, venusData: Planet, marsData: Planet, jupiterData: Planet, saturnData: Planet, uranusData: Planet, neptuneData: Planet, moonData: Planet = { speed: 0.005, angle: 0, distance: 2 };
 
     let showLines = true;
     let isDragging = false;
