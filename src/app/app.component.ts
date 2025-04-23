@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, AfterViewInit, OnInit } from '@angular/core';
 import { DataService } from './services/data.service';
 import { MonitorService } from './services/monitor.service';
 
@@ -8,18 +8,22 @@ import { MonitorService } from './services/monitor.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, AfterViewInit {
+  // basic settings
   worker?: Worker;
   loggingInterval: any;
   canvas?: OffscreenCanvas;
 
+  // measurement
   cpuUsage: string = '';
   memoryUsage: string = '';
   gpuUsage: string = '';
   fps: string = '';
 
+  // new planet
   isAddingPlanet = false;
   newPlanetData: any = {};
 
+  // planets
   planets: any[] = [];
   showPlanetsList: boolean = false;
 
@@ -169,40 +173,6 @@ export class AppComponent implements OnInit, AfterViewInit {
           });
         }
       });
-
-      console.log(this.planets);
-      
-      if (this.planets.find(x => x.name === 'Mercury')) {
-        this.worker.postMessage({ type: 'mercuryData', mercuryData: this.mercuryData });
-      }
-
-      // if (this.venusData) {
-      //   this.worker.postMessage({ type: 'venusData', venusData: this.venusData });
-      // }
-
-      // if (this.earthData) {
-      //   this.worker.postMessage({ type: 'earthData', earthData: this.earthData });
-      // }
-
-      // if (this.marsData) {
-      //   this.worker.postMessage({ type: 'marsData', marsData: this.marsData });
-      // }
-
-      // if (this.jupiterData) {
-      //   this.worker.postMessage({ type: 'jupiterData', jupiterData: this.jupiterData });
-      // }
-
-      // if (this.saturnData) {
-      //   this.worker.postMessage({ type: 'saturnData', saturnData: this.saturnData });
-      // }
-
-      // if (this.uranusData) {
-      //   this.worker.postMessage({ type: 'uranusData', uranusData: this.uranusData });
-      // }
-
-      // if (this.neptuneData) {
-      //   this.worker.postMessage({ type: 'neptuneData', neptuneData: this.neptuneData });
-      // }
 
       this.worker.onmessage = (event) => {
         if (event.data.type === 'fps') {
