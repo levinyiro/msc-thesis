@@ -13,7 +13,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   loggingInterval: any;
   canvas?: OffscreenCanvas;
 
-  // measurement
+  // measuremen
   cpuUsage: string = '';
   memoryUsage: string = '';
   gpuUsage: string = '';
@@ -102,7 +102,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       const offscreen = htmlCanvas.transferControlToOffscreen() as any;
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
 
-
       htmlCanvas.addEventListener('mousedown', (event: MouseEvent) => {
         if (this.worker) {
           const rect = htmlCanvas.getBoundingClientRect();
@@ -137,26 +136,26 @@ export class AppComponent implements OnInit, AfterViewInit {
         }
       });
 
-      window.addEventListener('resize', () => {
-        if (this.worker && htmlCanvas) {
-          const rect = htmlCanvas.getBoundingClientRect();
+      // window.addEventListener('resize', () => {
+      //   if (this.worker && htmlCanvas) {
+      //     const rect = htmlCanvas.getBoundingClientRect();
       
-          this.worker.postMessage({
-            type: 'update_canvas',
-            rect: {
-              left: rect.left,
-              right: rect.right,
-              top: rect.top,
-              bottom: rect.bottom,
-              height: rect.height,
-              width: rect.width,
-            },
-            windowWidth: window.innerWidth,
-            windowHeight: window.innerHeight,
-            devicePixelRatio: window.devicePixelRatio,
-          });
-        }
-      });
+      //     this.worker.postMessage({
+      //       type: 'update_canvas',
+      //       rect: {
+      //         left: rect.left,
+      //         right: rect.right,
+      //         top: rect.top,
+      //         bottom: rect.bottom,
+      //         height: rect.height,
+      //         width: rect.width,
+      //       },
+      //       windowWidth: window.innerWidth,
+      //       windowHeight: window.innerHeight,
+      //       devicePixelRatio: window.devicePixelRatio,
+      //     });
+      //   }
+      // });
       
       window.addEventListener('keydown', (event: KeyboardEvent) => {
         if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
@@ -172,16 +171,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         
         if (this.worker) {
           this.worker.postMessage({ type: 'keydown', key: scroll > 0 ? 'ArrowDown' : 'ArrowUp' });
-        }
-      });
-      
-      const checkbox = document.getElementById('inputShowLine') as HTMLInputElement;
-      checkbox.addEventListener('change', () => {
-        if (this.worker) {
-          this.worker.postMessage({
-            type: 'toggleLines',
-            showLines: checkbox.checked
-          });
         }
       });
 
@@ -282,6 +271,15 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   // event handlings
+  onShowLines(event: Event) {
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'toggleLines',
+        showLines: (event.target! as HTMLInputElement).checked
+      });
+    }
+  }
+
   exportMetricsToCSV(): void {
     this.monitorService.exportToCSV();
   }
