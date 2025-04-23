@@ -20,4 +20,6 @@ export interface Planet {
     };
   },
   mesh?: any;
+  orbitLine?: any;
+  spotLight?: any;
 }

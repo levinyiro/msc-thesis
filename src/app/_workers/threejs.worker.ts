@@ -18,6 +18,8 @@ insideWorker((event: any) => {
     camera.position.z = 200;
     camera.position.y = 40;
     camera.rotation.x = -0.3;
+    let yaw = 0, pitch = 0;
+    let previousMousePosition = { x: 0, y: 0 };
 
     // light settings
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
@@ -26,12 +28,6 @@ insideWorker((event: any) => {
     // basic planets
     let sun: any;
     let moon: Planet = {data: {distance: 2, speed: 0.005, angle: 0}};
-
-    let showLines = true;
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
-    let yaw = 0, pitch = 0;
-    const distanceDivider = 3000000;
     
     // fps counting
     let frameCount = 0;
@@ -43,16 +39,17 @@ insideWorker((event: any) => {
     let previewPlanet: any | null = null;
     let previewOrbit: any | null = null;
 
+    // planets list
     let planets: Planet[] = [];
-    let orbitLines: any[] = [];
-    let planetSpotLights: any[] = [];
 
+    // general settings
+    let showLines = true;
+    let isDragging = false;
     let targetObject: any;
-
     let cameraTargetPosition = new THREE.Vector3().copy(camera.position);
-
+    const DISTANCE_DIVIDER = 3000000;
     const ANIMATION_SPEED = 0.0001;
-
+    
     function addStars(count: number) {
       const starGeometry = new THREE.SphereGeometry(0.3, 8, 8);
       const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -75,7 +72,7 @@ insideWorker((event: any) => {
     function createOrbitLine(planet: Planet): any {
       if (!planet) return null;
     
-      const semiMajorAxis = planet.data!.semimajorAxis / distanceDivider;
+      const semiMajorAxis = planet.data!.semimajorAxis / DISTANCE_DIVIDER;
       const eccentricity = planet.data!.eccentricity || 0;
       const focalDistance = semiMajorAxis * eccentricity;
       
@@ -226,7 +223,7 @@ insideWorker((event: any) => {
     }
 
     function calculateOrbitDistance(position: any): number {
-      return position.distanceTo(sun.position) * distanceDivider;
+      return position.distanceTo(sun.position) * DISTANCE_DIVIDER;
     }
 
     function estimateAvgTemperature(distance: number) {
@@ -269,7 +266,7 @@ insideWorker((event: any) => {
       planet.mesh.angle -= planet.data.speed;
       planet.mesh.rotation.y += 0.05;
 
-      const semiMajorAxis = planet.data.semimajorAxis / distanceDivider;
+      const semiMajorAxis = planet.data.semimajorAxis / DISTANCE_DIVIDER;
       const eccentricity = planet.data.eccentricity || 0;
       const focalDistance = semiMajorAxis * eccentricity;
 
@@ -320,7 +317,7 @@ insideWorker((event: any) => {
       const earthSpotLight = createPlanetSpotlight(earth.mesh.name);
       earthSpotLight.target = earth.mesh;
       scene.add(earthSpotLight);
-      planetSpotLights.push(earthSpotLight);
+      earth.spotLight = earthSpotLight;
       earth.mesh.angle = getInitialAngle(earth, new Date());
       scene.add(earth.mesh);
 
@@ -343,7 +340,7 @@ insideWorker((event: any) => {
       const moonSpotLight = createPlanetSpotlight(moon.mesh.name);
       moonSpotLight.target = moon.mesh;
       scene.add(moonSpotLight);
-      planetSpotLights.push(moonSpotLight);
+      moon.spotLight = moonSpotLight;
 
       // mercury mesh
       const mercuryTexture = new THREE.Texture(mercuryBitmap);
@@ -359,7 +356,7 @@ insideWorker((event: any) => {
       const mercurySpotLight = createPlanetSpotlight(mercury.mesh.name);
       mercurySpotLight.target = mercury.mesh;
       scene.add(mercurySpotLight);
-      planetSpotLights.push(mercurySpotLight);
+      mercury.spotLight = mercurySpotLight;
 
       // venus mesh
       const venusTexture = new THREE.Texture(venusBitmap);
@@ -375,7 +372,7 @@ insideWorker((event: any) => {
       const venusSpotLight = createPlanetSpotlight(venus.mesh.name);
       venusSpotLight.target = venus.mesh;
       scene.add(venusSpotLight);
-      planetSpotLights.push(venusSpotLight);
+      venus.spotLight = venusSpotLight;
 
       const marsTexture = new THREE.Texture(marsBitmap);
       marsTexture.needsUpdate = true;
@@ -390,7 +387,7 @@ insideWorker((event: any) => {
       const marsSpotLight = createPlanetSpotlight(mars.mesh.name);
       marsSpotLight.target = mars.mesh;
       scene.add(marsSpotLight);
-      planetSpotLights.push(marsSpotLight);
+      mars.spotLight = marsSpotLight;
 
       const jupiterTexture = new THREE.Texture(jupiterBitmap);
       jupiterTexture.needsUpdate = true;
@@ -405,7 +402,7 @@ insideWorker((event: any) => {
       const jupiterSpotLight = createPlanetSpotlight(jupiter.mesh.name);
       jupiterSpotLight.target = jupiter.mesh;
       scene.add(jupiterSpotLight);
-      planetSpotLights.push(jupiterSpotLight);
+      jupiter.spotLight = jupiterSpotLight;
 
       const saturnTexture = new THREE.Texture(saturnBitmap);
       saturnTexture.needsUpdate = true;
@@ -420,7 +417,7 @@ insideWorker((event: any) => {
       const saturnSpotLight = createPlanetSpotlight(saturn.mesh.name);
       saturnSpotLight.target = saturn.mesh;
       scene.add(saturnSpotLight);
-      planetSpotLights.push(saturnSpotLight);
+      saturn.spotLight = saturnSpotLight;
 
       const uranusTexture = new THREE.Texture(uranusBitmap);
       uranusTexture.needsUpdate = true;
@@ -435,7 +432,7 @@ insideWorker((event: any) => {
       const uranusSpotLight = createPlanetSpotlight(uranus.mesh.name);
       uranusSpotLight.target = uranus.mesh;
       scene.add(uranusSpotLight);
-      planetSpotLights.push(uranusSpotLight);
+      uranus.spotLight = uranusSpotLight;
 
       const neptuneTexture = new THREE.Texture(neptuneBitmap);
       neptuneTexture.needsUpdate = true;
@@ -450,11 +447,11 @@ insideWorker((event: any) => {
       const neptuneSpotLight = createPlanetSpotlight(neptune.mesh.name);
       neptuneSpotLight.target = neptune.mesh;
       scene.add(neptuneSpotLight);
-      planetSpotLights.push(neptuneSpotLight);
+      neptune.spotLight = neptuneSpotLight;
 
       // show orbitLines
       if (showLines) {        
-        orbitLines.forEach(orbitLine => {
+        planets.map(planet => planet.orbitLine).forEach(orbitLine => {
           scene.add(orbitLine);
         })
       }
@@ -564,14 +561,14 @@ insideWorker((event: any) => {
             }
 
             loadTextureWithFetch(texturePath).then((texture) => {
-              const newPlanet = createNewPlanet(planet, position, texture);
+              const newPlanet: Planet = createNewPlanet(planet, position, texture);
               newPlanet.data = planet.data;              
               scene.add(newPlanet.mesh);
               
               const newPlanetSpotLight = createPlanetSpotlight(newPlanet.mesh.name);
               newPlanetSpotLight.target = newPlanet.mesh;
               scene.add(newPlanetSpotLight);
-              planetSpotLights.push(newPlanetSpotLight);
+              newPlanet.spotLight = newPlanetSpotLight;
 
               planets.push(newPlanet);
 
@@ -587,8 +584,8 @@ insideWorker((event: any) => {
 
               const permanentOrbit = createOrbitLine(newPlanet);
               permanentOrbit.name = newPlanet.data!.englishName!.toLowerCase().replace(' ', '') + 'Orbit';
-              orbitLines.push(permanentOrbit);
-                            
+              newPlanet.orbitLine = permanentOrbit;
+              
               if (showLines) {
                 scene.add(permanentOrbit);
               }
@@ -636,8 +633,6 @@ insideWorker((event: any) => {
 
             previewPlanet.position.copy(pos);
 
-            if (previewOrbit) scene.remove(previewOrbit);
-
             const orbitData: Planet = {data: {
               semimajorAxis: calculateOrbitDistance(pos),
               perihelion: calculateOrbitDistance(pos),
@@ -656,9 +651,9 @@ insideWorker((event: any) => {
         case 'toggleLines':
           showLines = event.data.showLines;
           
-          orbitLines.forEach(orbitLine => {
+          planets.map(planet => planet.orbitLine).forEach(orbitLine => {
             showLines ? scene.add(orbitLine) : scene.remove(orbitLine);
-          })
+          });
 
           break;
 
@@ -719,7 +714,7 @@ insideWorker((event: any) => {
           
           mercury.data = event.data.mercuryData as Planet;
           mercury.data.color = 0xe7e8ec;
-          orbitLines.push(createOrbitLine(mercury)); 
+          mercury.orbitLine = createOrbitLine(mercury);
           mercury.data.speed = calculateSpeedFromVolatility(mercury, ANIMATION_SPEED);
           planets.push(mercury);
           break;
@@ -728,7 +723,7 @@ insideWorker((event: any) => {
           const venus: any = {};
           venus.data = event.data.venusData as Planet;
           venus.data.color = 0xeecb8b;
-          orbitLines.push(createOrbitLine(venus));
+          venus.orbitLine = createOrbitLine(venus);
           venus.data.speed = calculateSpeedFromVolatility(venus, ANIMATION_SPEED);
           planets.push(venus)
           break;
@@ -737,7 +732,7 @@ insideWorker((event: any) => {
           const earth: any = {};
           earth.data = event.data.earthData as Planet;
           earth.data.color = 0x6b93d6;
-          orbitLines.push(createOrbitLine(earth));
+          earth.orbitLine = createOrbitLine(earth);
           earth.data.speed = calculateSpeedFromVolatility(earth, ANIMATION_SPEED);
           planets.push(earth);
           break;
@@ -746,7 +741,7 @@ insideWorker((event: any) => {
           const mars: any = {};
           mars.data = event.data.marsData as Planet;
           mars.data.color = 0x993d00;
-          orbitLines.push(createOrbitLine(mars));
+          mars.orbitLine = createOrbitLine(mars);
           mars.data.speed = calculateSpeedFromVolatility(mars, ANIMATION_SPEED);
           planets.push(mars);
           break;
@@ -755,7 +750,7 @@ insideWorker((event: any) => {
           const jupiter: any = {};
           jupiter.data = event.data.jupiterData as Planet;
           jupiter.data.color = 0xb07f35;
-          orbitLines.push(createOrbitLine(jupiter));
+          jupiter.orbitLine = createOrbitLine(jupiter);
           jupiter.data.speed = calculateSpeedFromVolatility(jupiter, ANIMATION_SPEED);
           planets.push(jupiter);
           break;
@@ -764,7 +759,7 @@ insideWorker((event: any) => {
           const saturn: any = {};
           saturn.data = event.data.saturnData as Planet;
           saturn.data.color = 0xb08f36;
-          orbitLines.push(createOrbitLine(saturn));
+          saturn.orbitLine = createOrbitLine(saturn);
           saturn.data.speed = calculateSpeedFromVolatility(saturn, ANIMATION_SPEED);
           planets.push(saturn);
           break;
@@ -773,7 +768,7 @@ insideWorker((event: any) => {
           const uranus: any = {};
           uranus.data = event.data.uranusData as Planet;
           uranus.data.color = 0x5580aa;
-          orbitLines.push(createOrbitLine(uranus));
+          uranus.orbitLine = createOrbitLine(uranus);
           uranus.data.speed = calculateSpeedFromVolatility(uranus, ANIMATION_SPEED);
           planets.push(uranus);
           break;
@@ -782,7 +777,7 @@ insideWorker((event: any) => {
           const neptune: any = {};
           neptune.data = event.data.neptuneData as Planet;
           neptune.data.color = 0x366896;
-          orbitLines.push(createOrbitLine(neptune));
+          neptune.orbitLine = createOrbitLine(neptune);
           neptune.data.speed = calculateSpeedFromVolatility(neptune, ANIMATION_SPEED);
           planets.push(neptune);
           break;
@@ -832,10 +827,8 @@ insideWorker((event: any) => {
           deleteObjectByName(orbitName);
 
           planets = planets.filter(p => p.mesh.name !== planetName);          
-          orbitLines = orbitLines.filter(p => p.name !== orbitName);
           
           const planetSpotLight = scene.getObjectByName(`${planetName}SpotLight`);
-          planetSpotLights = planetSpotLights.filter(p => p.name !== planetSpotLight);
           if (planetSpotLight) {
             scene.remove(planetSpotLight);
             if (planetSpotLight.target) scene.remove(planetSpotLight.target);
