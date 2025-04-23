@@ -252,10 +252,21 @@ export class AppComponent implements OnInit, AfterViewInit {
       
       window.addEventListener('keydown', (event: KeyboardEvent) => {
         if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          console.log(event.key);
+          
           this.worker.postMessage({ type: 'keydown', key: event.key });
         }
       });
 
+      window.addEventListener('mousewheel', (event: Event) => {
+        event.preventDefault();
+        const scroll = (event as WheelEvent).deltaY;
+        
+        if (this.worker) {
+          this.worker.postMessage({ type: 'keydown', key: scroll > 0 ? 'ArrowDown' : 'ArrowUp' });
+        }
+      });
+      
       const checkbox = document.getElementById('inputShowLine') as HTMLInputElement;
       checkbox.addEventListener('change', () => {
         if (this.worker) {
