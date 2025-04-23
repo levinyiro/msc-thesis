@@ -5,23 +5,26 @@ const THREE = require('three');
 
 insideWorker((event: any) => {
   if (event.data.canvas) {
+    // basic settings
     const canvas = event.data.canvas;
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setClearColor(0x111111);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
     const scene = new THREE.Scene();
+
+    // camera settings
     const camera = new THREE.PerspectiveCamera(30, canvas.width / canvas.height, 0.1, 1000);
     camera.position.z = 200;
     camera.position.y = 40;
     camera.rotation.x = -0.3;
 
+    // light settings
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
     scene.add(ambientLight);
 
+    // basic planets
     let sun: any;
-    let orbitPath: any;
     let moon: Planet = {data: {distance: 2, speed: 0.005, angle: 0}};
 
     let showLines = true;
@@ -92,9 +95,7 @@ insideWorker((event: any) => {
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
             
       orbitPath.name = planet.data!.englishName?.toLowerCase().replace(' ', '') + 'Orbit';
-    
-      scene.add(orbitPath);
-      orbitLines.push(orbitPath);
+          
       return orbitPath;
     }
 
@@ -279,12 +280,6 @@ insideWorker((event: any) => {
       planet.mesh.position.z = r * Math.sin(planet.mesh.angle);
     }
 
-    if (showLines) {
-      planets.forEach(x => {
-        createOrbitLine(x);
-      })
-    }
-
     loadTextures().then(textures => {
       const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
@@ -457,6 +452,13 @@ insideWorker((event: any) => {
       scene.add(neptuneSpotLight);
       planetSpotLights.push(neptuneSpotLight);
 
+      // show orbitLines
+      if (showLines) {        
+        orbitLines.forEach(orbitLine => {
+          scene.add(orbitLine);
+        })
+      }
+
       animate();
     }).catch(error => {
       console.error('Error loading textures:', error);
@@ -563,11 +565,7 @@ insideWorker((event: any) => {
 
             loadTextureWithFetch(texturePath).then((texture) => {
               const newPlanet = createNewPlanet(planet, position, texture);
-              newPlanet.data = planet.data;
-
-              console.log(newPlanet);
-              
-              
+              newPlanet.data = planet.data;              
               scene.add(newPlanet.mesh);
               
               const newPlanetSpotLight = createPlanetSpotlight(newPlanet.mesh.name);
@@ -585,15 +583,15 @@ insideWorker((event: any) => {
                 scene.remove(previewOrbit);
                 previewOrbit = null;
               }
-
-              if (showLines) {
-                const permanentOrbit = createOrbitLine(newPlanet);
-                permanentOrbit.name = newPlanet.data!.englishName!.toLowerCase().replace(' ', '') + 'Orbit';
-
-                orbitLines.push(permanentOrbit);
-              }
-
               isAddingPlanet = false;
+
+              const permanentOrbit = createOrbitLine(newPlanet);
+              permanentOrbit.name = newPlanet.data!.englishName!.toLowerCase().replace(' ', '') + 'Orbit';
+              orbitLines.push(permanentOrbit);
+                            
+              if (showLines) {
+                scene.add(permanentOrbit);
+              }
             });
           } else {
             isDragging = true;
@@ -651,16 +649,17 @@ insideWorker((event: any) => {
 
             if (previewOrbit) scene.remove(previewOrbit);
             previewOrbit = createOrbitLine(orbitData);
+            scene.add(previewOrbit);
           }
           break;
 
         case 'toggleLines':
-          const showLines = event.data.showLines;
-
+          showLines = event.data.showLines;
+          
           orbitLines.forEach(orbitLine => {
             showLines ? scene.add(orbitLine) : scene.remove(orbitLine);
           })
-          
+
           break;
 
         // case 'update_canvas':
@@ -720,8 +719,7 @@ insideWorker((event: any) => {
           
           mercury.data = event.data.mercuryData as Planet;
           mercury.data.color = 0xe7e8ec;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(mercury);
+          orbitLines.push(createOrbitLine(mercury)); 
           mercury.data.speed = calculateSpeedFromVolatility(mercury, ANIMATION_SPEED);
           planets.push(mercury);
           break;
@@ -730,8 +728,7 @@ insideWorker((event: any) => {
           const venus: any = {};
           venus.data = event.data.venusData as Planet;
           venus.data.color = 0xeecb8b;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(venus);
+          orbitLines.push(createOrbitLine(venus));
           venus.data.speed = calculateSpeedFromVolatility(venus, ANIMATION_SPEED);
           planets.push(venus)
           break;
@@ -740,8 +737,7 @@ insideWorker((event: any) => {
           const earth: any = {};
           earth.data = event.data.earthData as Planet;
           earth.data.color = 0x6b93d6;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(earth);
+          orbitLines.push(createOrbitLine(earth));
           earth.data.speed = calculateSpeedFromVolatility(earth, ANIMATION_SPEED);
           planets.push(earth);
           break;
@@ -750,8 +746,7 @@ insideWorker((event: any) => {
           const mars: any = {};
           mars.data = event.data.marsData as Planet;
           mars.data.color = 0x993d00;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(mars);
+          orbitLines.push(createOrbitLine(mars));
           mars.data.speed = calculateSpeedFromVolatility(mars, ANIMATION_SPEED);
           planets.push(mars);
           break;
@@ -760,8 +755,7 @@ insideWorker((event: any) => {
           const jupiter: any = {};
           jupiter.data = event.data.jupiterData as Planet;
           jupiter.data.color = 0xb07f35;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(jupiter);
+          orbitLines.push(createOrbitLine(jupiter));
           jupiter.data.speed = calculateSpeedFromVolatility(jupiter, ANIMATION_SPEED);
           planets.push(jupiter);
           break;
@@ -770,8 +764,7 @@ insideWorker((event: any) => {
           const saturn: any = {};
           saturn.data = event.data.saturnData as Planet;
           saturn.data.color = 0xb08f36;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(saturn);
+          orbitLines.push(createOrbitLine(saturn));
           saturn.data.speed = calculateSpeedFromVolatility(saturn, ANIMATION_SPEED);
           planets.push(saturn);
           break;
@@ -780,8 +773,7 @@ insideWorker((event: any) => {
           const uranus: any = {};
           uranus.data = event.data.uranusData as Planet;
           uranus.data.color = 0x5580aa;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(uranus);
+          orbitLines.push(createOrbitLine(uranus));
           uranus.data.speed = calculateSpeedFromVolatility(uranus, ANIMATION_SPEED);
           planets.push(uranus);
           break;
@@ -790,8 +782,7 @@ insideWorker((event: any) => {
           const neptune: any = {};
           neptune.data = event.data.neptuneData as Planet;
           neptune.data.color = 0x366896;
-          if (orbitPath) scene.remove(orbitPath);
-          createOrbitLine(neptune);
+          orbitLines.push(createOrbitLine(neptune));
           neptune.data.speed = calculateSpeedFromVolatility(neptune, ANIMATION_SPEED);
           planets.push(neptune);
           break;
