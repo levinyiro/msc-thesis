@@ -1,4 +1,4 @@
-import { Planet } from "./models/planet";
+import { Planet } from "../models/planet";
 
 const insideWorker = require("offscreen-canvas/inside-worker");
 const THREE = require('three');
@@ -72,7 +72,7 @@ insideWorker((event: any) => {
     function createOrbitLine(planet: Planet): any {
       if (!planet) return null;
     
-      const semiMajorAxis = planet.data!.semimajorAxis / DISTANCE_DIVIDER;
+      const semiMajorAxis = planet.data!.semimajorAxis! / DISTANCE_DIVIDER;
       const eccentricity = planet.data!.eccentricity || 0;
       const focalDistance = semiMajorAxis * eccentricity;
       
@@ -91,7 +91,7 @@ insideWorker((event: any) => {
       const orbitPathMaterial = new THREE.LineBasicMaterial({ color: planet.data!.color });
       const orbitPath = new THREE.Line(orbitPathGeometry, orbitPathMaterial);
             
-      orbitPath.name = planet.data!.englishName?.toLowerCase().replace(' ', '') + 'Orbit';
+      orbitPath.name = planet.data!.name?.toLowerCase().replace(' ', '') + 'Orbit';
           
       return orbitPath;
     }
@@ -189,7 +189,7 @@ insideWorker((event: any) => {
     }
 
     function getInitialAngle(planet: Planet, date: Date): number {
-      const T = planet.data!.sideralOrbit;
+      const T = planet.data!.sideralOrbit!;
       const n = 2 * Math.PI / T;
       const J2000 = new Date('2000-01-01T12:00:00Z');
 
@@ -199,8 +199,8 @@ insideWorker((event: any) => {
       return M % (2 * Math.PI);
     }
 
-    function getPlanetByEnglishName(name: string): any {      
-      return planets.find(x => x.data!.englishName!.toLowerCase() === name);
+    function getPlanetByName(name: string): any {      
+      return planets.find(x => x.data!.name!.toLowerCase() === name);
     }
 
     function createNewPlanet(planet: Planet, position: any, texture: any): any {
@@ -217,7 +217,7 @@ insideWorker((event: any) => {
       planet.mesh.castShadow = true;
       planet.mesh.receiveShadow = true;
       
-      planet.mesh.name = planet.data!.englishName?.toLowerCase().replace(' ', '');
+      planet.mesh.name = planet.data!.name?.toLowerCase().replace(' ', '');
 
       return planet;
     }
@@ -263,10 +263,10 @@ insideWorker((event: any) => {
     function setPlanetPosition(planet: Planet) {
       if (!planet.data) return;
 
-      planet.mesh.angle -= planet.data.speed;
+      planet.mesh.angle -= planet.data.speed!;
       planet.mesh.rotation.y += 0.05;
 
-      const semiMajorAxis = planet.data.semimajorAxis / DISTANCE_DIVIDER;
+      const semiMajorAxis = planet.data.semimajorAxis! / DISTANCE_DIVIDER;
       const eccentricity = planet.data.eccentricity || 0;
       const focalDistance = semiMajorAxis * eccentricity;
 
@@ -307,10 +307,10 @@ insideWorker((event: any) => {
       earthTexture.repeat.set(1, -1);
       const earthGeometry = new THREE.SphereGeometry(0.5, 32, 32);
       const earthMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
-      const earth: Planet = getPlanetByEnglishName('earth');
+      const earth: Planet = getPlanetByName('earth');
       
       earth.mesh = new THREE.Mesh(earthGeometry, earthMaterial);
-      earth.mesh.rotation.z = getAxialTilt(earth.data?.axialTilt);
+      earth.mesh.rotation.z = getAxialTilt(earth.data?.axialTilt!);
       earth.mesh.castShadow = true;
       earth.mesh.receiveShadow = true;
       earth.mesh.name = 'earth';
@@ -347,9 +347,9 @@ insideWorker((event: any) => {
       mercuryTexture.needsUpdate = true;
       const mercuryGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const mercuryMaterial = new THREE.MeshPhongMaterial({ map: mercuryTexture });
-      const mercury: Planet = getPlanetByEnglishName('mercury');
+      const mercury: Planet = getPlanetByName('mercury');
       mercury.mesh = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
-      mercury.mesh.rotation.z = getAxialTilt(mercury.data?.axialTilt);
+      mercury.mesh.rotation.z = getAxialTilt(mercury.data?.axialTilt!);
       mercury.mesh.name = 'mercury';
       mercury.mesh.angle = getInitialAngle(mercury, new Date());
       scene.add(mercury.mesh);
@@ -363,9 +363,9 @@ insideWorker((event: any) => {
       venusTexture.needsUpdate = true;
       const venusGeometry = new THREE.SphereGeometry(0.4, 32, 32);
       const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
-      const venus: Planet = getPlanetByEnglishName('venus');
+      const venus: Planet = getPlanetByName('venus');
       venus.mesh = new THREE.Mesh(venusGeometry, venusMaterial);
-      venus.mesh.rotation.z = getAxialTilt(venus.data?.axialTilt);
+      venus.mesh.rotation.z = getAxialTilt(venus.data?.axialTilt!);
       venus.mesh.name = 'venus';
       venus.mesh.angle = getInitialAngle(venus, new Date());
       scene.add(venus.mesh);
@@ -378,9 +378,9 @@ insideWorker((event: any) => {
       marsTexture.needsUpdate = true;
       const marsGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
-      const mars: Planet = getPlanetByEnglishName('mars');
+      const mars: Planet = getPlanetByName('mars');
       mars.mesh = new THREE.Mesh(marsGeometry, marsMaterial);
-      mars.mesh.rotation.z = getAxialTilt(mars.data?.axialTilt);
+      mars.mesh.rotation.z = getAxialTilt(mars.data?.axialTilt!);
       mars.mesh.name = 'mars';
       mars.mesh.angle = getInitialAngle(mars, new Date());
       scene.add(mars.mesh);
@@ -393,9 +393,9 @@ insideWorker((event: any) => {
       jupiterTexture.needsUpdate = true;
       const jupiterGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
-      const jupiter: Planet = getPlanetByEnglishName('jupiter');
+      const jupiter: Planet = getPlanetByName('jupiter');
       jupiter.mesh = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
-      jupiter.mesh.rotation.z = getAxialTilt(jupiter.data?.axialTilt);
+      jupiter.mesh.rotation.z = getAxialTilt(jupiter.data?.axialTilt!);
       jupiter.mesh.name = 'jupiter';
       jupiter.mesh.angle = getInitialAngle(jupiter, new Date());
       scene.add(jupiter.mesh);
@@ -408,9 +408,9 @@ insideWorker((event: any) => {
       saturnTexture.needsUpdate = true;
       const saturnGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
-      const saturn: Planet = getPlanetByEnglishName('saturn');
+      const saturn: Planet = getPlanetByName('saturn');
       saturn.mesh = new THREE.Mesh(saturnGeometry, saturnMaterial);
-      saturn.mesh.rotation.z = getAxialTilt(saturn.data?.axialTilt);
+      saturn.mesh.rotation.z = getAxialTilt(saturn.data?.axialTilt!);
       saturn.mesh.name = 'saturn';
       saturn.mesh.angle = getInitialAngle(saturn, new Date());
       scene.add(saturn.mesh);
@@ -423,9 +423,9 @@ insideWorker((event: any) => {
       uranusTexture.needsUpdate = true;
       const uranusGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
-      const uranus: Planet = getPlanetByEnglishName('uranus');
+      const uranus: Planet = getPlanetByName('uranus');
       uranus.mesh = new THREE.Mesh(uranusGeometry, uranusMaterial);
-      uranus.mesh.rotation.z = getAxialTilt(uranus.data?.axialTilt);
+      uranus.mesh.rotation.z = getAxialTilt(uranus.data?.axialTilt!);
       uranus.mesh.name = 'uranus'
       uranus.mesh.angle = getInitialAngle(uranus, new Date());
       scene.add(uranus.mesh);
@@ -438,9 +438,9 @@ insideWorker((event: any) => {
       neptuneTexture.needsUpdate = true;
       const neptuneGeometry = new THREE.SphereGeometry(0.3, 32, 32);
       const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
-      const neptune: Planet = getPlanetByEnglishName('neptune');
+      const neptune: Planet = getPlanetByName('neptune');
       neptune.mesh = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
-      neptune.mesh.rotation.z = getAxialTilt(neptune.data?.axialTilt);
+      neptune.mesh.rotation.z = getAxialTilt(neptune.data?.axialTilt!);
       neptune.mesh.name = 'neptune'
       neptune.mesh.angle = getInitialAngle(neptune, new Date());
       scene.add(neptune.mesh);
@@ -462,11 +462,11 @@ insideWorker((event: any) => {
     });
 
     function animate() {
-      const earth = getPlanetByEnglishName('earth');
+      const earth = getPlanetByName('earth');
       if (earth && moon) {
         moon.mesh.angle += moon.data!.speed;
-        moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance;
-        moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance;
+        moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance!;
+        moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance!;
       }
 
       // fps counting
@@ -583,7 +583,7 @@ insideWorker((event: any) => {
               isAddingPlanet = false;
 
               const permanentOrbit = createOrbitLine(newPlanet);
-              permanentOrbit.name = newPlanet.data!.englishName!.toLowerCase().replace(' ', '') + 'Orbit';
+              permanentOrbit.name = newPlanet.data!.name!.toLowerCase().replace(' ', '') + 'Orbit';
               newPlanet.orbitLine = permanentOrbit;
               
               if (showLines) {

@@ -20,7 +20,7 @@
     <div class="planet-list" *ngIf="showPlanetsList">
       <div *ngFor="let planet of planets" class="planet-item row mt-2">
         <div class="col-6">
-          {{planet.englishName}}
+          {{planet.name}}
         </div>
         <div class="col-6 d-flex">
           <button (click)="followPlanet(planet)" class="btn btn-sm btn-primary me-2">

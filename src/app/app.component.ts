@@ -36,6 +36,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getMercuryData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'mercuryData', mercuryData: data });
       }
@@ -43,6 +44,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     
     this.dataService.getVenusData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'venusData', venusData: data });
       }
@@ -50,6 +52,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getEarthData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'earthData', earthData: data });
       }
@@ -57,6 +60,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getMarsData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'marsData', marsData: data });
       }
@@ -64,6 +68,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getJupiterData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'jupiterData', jupiterData: data });
       }
@@ -71,6 +76,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getSaturnData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'saturnData', saturnData: data });
       }
@@ -78,6 +84,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getUranusData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'uranusData', uranusData: data });
       }
@@ -85,6 +92,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.dataService.getNeptuneData().subscribe(data => {
       if (this.worker) {
+        data.name = data.englishName;
         this.planets.push(data);
         this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
       }
@@ -287,7 +295,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   startAddingPlanet() {
     this.isAddingPlanet = true;
     this.newPlanetData = {
-      englishName: `Planet ${Math.floor(Math.random() * 1000)}`,
+      name: `Planet ${Math.floor(Math.random() * 1000)}`,
       color: Math.floor(Math.random() * 0xffffff).toString(),
       size: 0.2 + Math.random() * 0.5,
       semimajorAxis: 0,
@@ -304,14 +312,11 @@ export class AppComponent implements OnInit, AfterViewInit {
       });
     }
 
-    // get back list from worker
-    if (this.worker) {
-      this.worker.postMessage({ 
-        type: 'getPlanets', 
-        planetData: this.newPlanetData 
-      });
-    }
     this.sortPlanetsByDistance();
+  }
+
+  toggleShowPlanetsList() {    
+    this.showPlanetsList = !this.showPlanetsList;
   }
 
   followPlanet(planet: any) {
@@ -332,10 +337,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
     this.planets = this.planets.filter(p => p !== planet);
     this.sortPlanetsByDistance();
-  }
-
-  toggleShowPlanetsList() {    
-    this.showPlanetsList = !this.showPlanetsList;
   }
 
   ngOnDestroy() {
