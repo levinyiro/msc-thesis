@@ -31,8 +31,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
-
     this.monitorSystemStats();
+
+    this.planets.push({
+      name: 'Sun',
+      deletable: false
+    });
 
     this.dataService.getMercuryData().subscribe(data => {
       if (this.worker) {
