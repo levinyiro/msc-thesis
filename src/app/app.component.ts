@@ -167,8 +167,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       
       window.addEventListener('keydown', (event: KeyboardEvent) => {
         if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-          console.log(event.key);
-          
           this.worker.postMessage({ type: 'keydown', key: event.key });
         }
       });
@@ -323,7 +321,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (this.worker) {
       this.worker.postMessage({
         type: 'followPlanet',
-        planetName: planet.englishName
+        planetName: planet.name
       });
     }
   }
@@ -332,7 +330,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (this.worker) {
       this.worker.postMessage({
         type: 'deletePlanet',
-        planetName: planet.englishName
+        planetName: planet.name
       });
     }
     this.planets = this.planets.filter(p => p !== planet);
