@@ -98,7 +98,7 @@ insideWorker((event: any) => {
 
     function calculateSpeedFromVolatility(data: any, baseSpeed: number): number {
       const eccentricityFactor = data.eccentricity || 0;
-      const massFactor = data.mass ? data.mass.massValue * Math.pow(10, data.mass.massExponent) : 1;
+      const massFactor = data.mass ? data.mass.value * Math.pow(10, data.mass.exponent) : 1;
 
       const normalizedMass = Math.log10(massFactor) / 30;
       const normalizedEccentricity = eccentricityFactor;
@@ -540,8 +540,8 @@ insideWorker((event: any) => {
             planet.data!.axialTilt ??= 0;
             planet.data!.size ??= 0.3;
             planet.data!.mass = {
-              massValue: 1,
-              massExponent: 24
+              value: 1,
+              exponent: 24
             };
 
             planet.data!.angle = Math.atan2(position.z, position.x);

@@ -7,14 +7,14 @@ export interface Planet {
     distance?: number;
     perihelion?: number;
     aphelion?: number;
+    semimajorAxis?: number;
     eccentricity?: number;
     axialTilt?: number;
-    semimajorAxis?: number;
     angle?: number;
     sideralOrbit?: number;
     mass?: {
-      massValue: number;
-      massExponent: number;
+      value: number;
+      exponent: number;
     };
   },
   mesh?: any;
