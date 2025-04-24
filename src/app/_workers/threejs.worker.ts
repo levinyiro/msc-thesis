@@ -17,12 +17,11 @@ insideWorker((event: any) => {
     const camera = new THREE.PerspectiveCamera(30, canvas.width / canvas.height, 0.1, 1000);
     camera.position.z = 200;
     camera.position.y = 40;
-    camera.rotation.x = -0.3;
     let yaw = 0, pitch = 0;
     let previousMousePosition = { x: 0, y: 0 };
 
     // light settings
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.01);
     scene.add(ambientLight);
 
     // basic planets
