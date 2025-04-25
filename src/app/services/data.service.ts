@@ -6,7 +6,7 @@ import { Observable } from "rxjs";
     providedIn: 'root'
 })
 export class DataService {
-    private apiUrl = 'https://api.le-systeme-solaire.net/rest.php/bodies/';
+    private apiUrl = 'https://api.le-systeme-solaire.net/rest.php/bodies';
 
     constructor(private http: HttpClient) {}
   

@@ -179,7 +179,7 @@ insideWorker((event: any) => {
     }
 
     function calculateOrbitDistance(position: any): number {
-      return position.distanceTo(sun.position) * DISTANCE_DIVIDER;
+      return position.distanceTo(sun.position);
     }
 
     function estimateAvgTemperature(distance: number) {
@@ -546,7 +546,7 @@ insideWorker((event: any) => {
             planet.data!.angle = Math.atan2(position.z, position.x);
             planet.data!.speed = calculateSpeedFromVolatility(planet.data!);
 
-            const estimatedTemperature = estimateAvgTemperature(calculateOrbitDistance(position));
+            const estimatedTemperature = estimateAvgTemperature(orbitDistance);
             let texturePath = '';
 
             if (estimatedTemperature > 100) {
@@ -632,10 +632,11 @@ insideWorker((event: any) => {
 
             previewPlanet.position.copy(pos);
 
+            const orbitDistance = calculateOrbitDistance(pos);
             const orbitData: Planet = {data: {
-              semimajorAxis: calculateOrbitDistance(pos),
-              perihelion: calculateOrbitDistance(pos),
-              aphelion: calculateOrbitDistance(pos),
+              semimajorAxis: orbitDistance,
+              perihelion: orbitDistance,
+              aphelion: orbitDistance,
               eccentricity: 0,
               color: 0xfff000,
               axialTilt: 0
