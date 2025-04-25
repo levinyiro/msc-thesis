@@ -710,7 +710,6 @@ insideWorker((event: any) => {
 
         case 'mercuryData':
           const mercury: any = {};
-          
           mercury.data = event.data.mercuryData as Planet;
           mercury.data.color = 0xe7e8ec;
           mercury.orbitLine = createOrbitLine(mercury);
