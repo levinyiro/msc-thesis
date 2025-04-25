@@ -95,7 +95,7 @@ insideWorker((event: any) => {
       return orbitPath;
     }
 
-    function calculateSpeedFromVolatility(data: any, baseSpeed: number): number {
+    function calculateSpeedFromVolatility(data: any): number {
       const eccentricityFactor = data.eccentricity || 0;
       const massFactor = data.mass ? data.mass.value * Math.pow(10, data.mass.exponent) : 1;
 
@@ -103,54 +103,11 @@ insideWorker((event: any) => {
       const normalizedEccentricity = eccentricityFactor;
 
       const volatility = normalizedMass + normalizedEccentricity;
-      return baseSpeed * (0.5 + volatility * 1.5);
+      return ANIMATION_SPEED * (0.5 + volatility * 1.5);
     }
 
-    function getAxialTilt(degree: number) {
+    function getAxialTiltInRadian(degree: number) {
       return (degree || 0) * (Math.PI / 180);
-    }
-
-    async function loadTextures() {
-      const textureUrls = [
-        { name: 'sunBitmap', url: '../assets/textures/sun.jpg' },
-        { name: 'earthBitmap', url: '../assets/textures/earth.jpg' },
-        { name: 'mercuryBitmap', url: '../assets/textures/mercury.jpg' },
-        { name: 'venusBitmap', url: '../assets/textures/venus.jpg' },
-        { name: 'marsBitmap', url: '../assets/textures/mars.jpg' },
-        { name: 'jupiterBitmap', url: '../assets/textures/jupiter.jpg' },
-        { name: 'saturnBitmap', url: '../assets/textures/saturn.jpg' },
-        { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
-        { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
-        { name: 'moonBitmap', url: '../assets/textures/moon.jpg' },
-        { name: 'lensflareBitmap', url: '../assets/lensflare.png' }
-      ];
-
-      const textures: any = {};
-
-      for (const { name, url } of textureUrls) {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          const blob = await response.blob();
-          const bitmap = await createImageBitmap(blob);
-          textures[name] = bitmap;
-        } catch (error) {
-          console.error(`Error loading texture ${name} from ${url}:`, error);
-        }
-      }
-
-      return textures;
-    }
-
-    async function loadTextureWithFetch(path: string): Promise<any> {
-      const response = await fetch(path);
-      const blob = await response.blob();
-      const imageBitmap = await createImageBitmap(blob);
-
-      const texture = new THREE.Texture(imageBitmap);
-      texture.needsUpdate = true;
-
-      return texture;
     }
 
     function getGlow(bitmap: any, size: number) {
@@ -212,7 +169,7 @@ insideWorker((event: any) => {
       planet.mesh = new THREE.Mesh(geometry, material);
       planet.mesh.angle = planet.data!.angle || 0;
       planet.mesh.position.copy(position);
-      planet.mesh.rotation.z = getAxialTilt(planet.data!.axialTilt || 0);
+      planet.mesh.rotation.z = getAxialTiltInRadian(planet.data!.axialTilt || 0);
       planet.mesh.castShadow = true;
       planet.mesh.receiveShadow = true;
       
@@ -276,6 +233,49 @@ insideWorker((event: any) => {
       planet.mesh.position.z = r * Math.sin(planet.mesh.angle);
     }
 
+    async function loadTextures() {
+      const textureUrls = [
+        { name: 'sunBitmap', url: '../assets/textures/sun.jpg' },
+        { name: 'earthBitmap', url: '../assets/textures/earth.jpg' },
+        { name: 'mercuryBitmap', url: '../assets/textures/mercury.jpg' },
+        { name: 'venusBitmap', url: '../assets/textures/venus.jpg' },
+        { name: 'marsBitmap', url: '../assets/textures/mars.jpg' },
+        { name: 'jupiterBitmap', url: '../assets/textures/jupiter.jpg' },
+        { name: 'saturnBitmap', url: '../assets/textures/saturn.jpg' },
+        { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
+        { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
+        { name: 'moonBitmap', url: '../assets/textures/moon.jpg' },
+        { name: 'lensflareBitmap', url: '../assets/lensflare.png' }
+      ];
+
+      const textures: any = {};
+
+      for (const { name, url } of textureUrls) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const blob = await response.blob();
+          const bitmap = await createImageBitmap(blob);
+          textures[name] = bitmap;
+        } catch (error) {
+          console.error(`Error loading texture ${name} from ${url}:`, error);
+        }
+      }
+
+      return textures;
+    }
+
+    async function loadTextureWithFetch(path: string): Promise<any> {
+      const response = await fetch(path);
+      const blob = await response.blob();
+      const imageBitmap = await createImageBitmap(blob);
+
+      const texture = new THREE.Texture(imageBitmap);
+      texture.needsUpdate = true;
+
+      return texture;
+    }
+
     loadTextures().then(textures => {
       const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
@@ -309,7 +309,7 @@ insideWorker((event: any) => {
       const earth: Planet = getPlanetByName('earth');
       
       earth.mesh = new THREE.Mesh(earthGeometry, earthMaterial);
-      earth.mesh.rotation.z = getAxialTilt(earth.data?.axialTilt!);
+      earth.mesh.rotation.z = getAxialTiltInRadian(earth.data?.axialTilt!);
       earth.mesh.castShadow = true;
       earth.mesh.receiveShadow = true;
       earth.mesh.name = 'earth';
@@ -348,7 +348,7 @@ insideWorker((event: any) => {
       const mercuryMaterial = new THREE.MeshPhongMaterial({ map: mercuryTexture });
       const mercury: Planet = getPlanetByName('mercury');
       mercury.mesh = new THREE.Mesh(mercuryGeometry, mercuryMaterial);
-      mercury.mesh.rotation.z = getAxialTilt(mercury.data?.axialTilt!);
+      mercury.mesh.rotation.z = getAxialTiltInRadian(mercury.data?.axialTilt!);
       mercury.mesh.name = 'mercury';
       mercury.mesh.angle = getInitialAngle(mercury, new Date());
       scene.add(mercury.mesh);
@@ -364,7 +364,7 @@ insideWorker((event: any) => {
       const venusMaterial = new THREE.MeshPhongMaterial({ map: venusTexture });
       const venus: Planet = getPlanetByName('venus');
       venus.mesh = new THREE.Mesh(venusGeometry, venusMaterial);
-      venus.mesh.rotation.z = getAxialTilt(venus.data?.axialTilt!);
+      venus.mesh.rotation.z = getAxialTiltInRadian(venus.data?.axialTilt!);
       venus.mesh.name = 'venus';
       venus.mesh.angle = getInitialAngle(venus, new Date());
       scene.add(venus.mesh);
@@ -379,7 +379,7 @@ insideWorker((event: any) => {
       const marsMaterial = new THREE.MeshPhongMaterial({ map: marsTexture });
       const mars: Planet = getPlanetByName('mars');
       mars.mesh = new THREE.Mesh(marsGeometry, marsMaterial);
-      mars.mesh.rotation.z = getAxialTilt(mars.data?.axialTilt!);
+      mars.mesh.rotation.z = getAxialTiltInRadian(mars.data?.axialTilt!);
       mars.mesh.name = 'mars';
       mars.mesh.angle = getInitialAngle(mars, new Date());
       scene.add(mars.mesh);
@@ -394,7 +394,7 @@ insideWorker((event: any) => {
       const jupiterMaterial = new THREE.MeshPhongMaterial({ map: jupiterTexture });
       const jupiter: Planet = getPlanetByName('jupiter');
       jupiter.mesh = new THREE.Mesh(jupiterGeometry, jupiterMaterial);
-      jupiter.mesh.rotation.z = getAxialTilt(jupiter.data?.axialTilt!);
+      jupiter.mesh.rotation.z = getAxialTiltInRadian(jupiter.data?.axialTilt!);
       jupiter.mesh.name = 'jupiter';
       jupiter.mesh.angle = getInitialAngle(jupiter, new Date());
       scene.add(jupiter.mesh);
@@ -409,7 +409,7 @@ insideWorker((event: any) => {
       const saturnMaterial = new THREE.MeshPhongMaterial({ map: saturnTexture });
       const saturn: Planet = getPlanetByName('saturn');
       saturn.mesh = new THREE.Mesh(saturnGeometry, saturnMaterial);
-      saturn.mesh.rotation.z = getAxialTilt(saturn.data?.axialTilt!);
+      saturn.mesh.rotation.z = getAxialTiltInRadian(saturn.data?.axialTilt!);
       saturn.mesh.name = 'saturn';
       saturn.mesh.angle = getInitialAngle(saturn, new Date());
       scene.add(saturn.mesh);
@@ -424,7 +424,7 @@ insideWorker((event: any) => {
       const uranusMaterial = new THREE.MeshPhongMaterial({ map: uranusTexture });
       const uranus: Planet = getPlanetByName('uranus');
       uranus.mesh = new THREE.Mesh(uranusGeometry, uranusMaterial);
-      uranus.mesh.rotation.z = getAxialTilt(uranus.data?.axialTilt!);
+      uranus.mesh.rotation.z = getAxialTiltInRadian(uranus.data?.axialTilt!);
       uranus.mesh.name = 'uranus'
       uranus.mesh.angle = getInitialAngle(uranus, new Date());
       scene.add(uranus.mesh);
@@ -439,7 +439,7 @@ insideWorker((event: any) => {
       const neptuneMaterial = new THREE.MeshPhongMaterial({ map: neptuneTexture });
       const neptune: Planet = getPlanetByName('neptune');
       neptune.mesh = new THREE.Mesh(neptuneGeometry, neptuneMaterial);
-      neptune.mesh.rotation.z = getAxialTilt(neptune.data?.axialTilt!);
+      neptune.mesh.rotation.z = getAxialTiltInRadian(neptune.data?.axialTilt!);
       neptune.mesh.name = 'neptune'
       neptune.mesh.angle = getInitialAngle(neptune, new Date());
       scene.add(neptune.mesh);
@@ -544,7 +544,7 @@ insideWorker((event: any) => {
             };
 
             planet.data!.angle = Math.atan2(position.z, position.x);
-            planet.data!.speed = calculateSpeedFromVolatility(planet.data!, ANIMATION_SPEED);
+            planet.data!.speed = calculateSpeedFromVolatility(planet.data!);
 
             const estimatedTemperature = estimateAvgTemperature(calculateOrbitDistance(position));
             let texturePath = '';
@@ -714,7 +714,7 @@ insideWorker((event: any) => {
           mercury.data = event.data.mercuryData as Planet;
           mercury.data.color = 0xe7e8ec;
           mercury.orbitLine = createOrbitLine(mercury);
-          mercury.data.speed = calculateSpeedFromVolatility(mercury, ANIMATION_SPEED);
+          mercury.data.speed = calculateSpeedFromVolatility(mercury);
           planets.push(mercury);
           break;
 
@@ -723,7 +723,7 @@ insideWorker((event: any) => {
           venus.data = event.data.venusData as Planet;
           venus.data.color = 0xeecb8b;
           venus.orbitLine = createOrbitLine(venus);
-          venus.data.speed = calculateSpeedFromVolatility(venus, ANIMATION_SPEED);
+          venus.data.speed = calculateSpeedFromVolatility(venus);
           planets.push(venus)
           break;
 
@@ -732,7 +732,7 @@ insideWorker((event: any) => {
           earth.data = event.data.earthData as Planet;
           earth.data.color = 0x6b93d6;
           earth.orbitLine = createOrbitLine(earth);
-          earth.data.speed = calculateSpeedFromVolatility(earth, ANIMATION_SPEED);
+          earth.data.speed = calculateSpeedFromVolatility(earth);
           planets.push(earth);
           break;
 
@@ -741,7 +741,7 @@ insideWorker((event: any) => {
           mars.data = event.data.marsData as Planet;
           mars.data.color = 0x993d00;
           mars.orbitLine = createOrbitLine(mars);
-          mars.data.speed = calculateSpeedFromVolatility(mars, ANIMATION_SPEED);
+          mars.data.speed = calculateSpeedFromVolatility(mars);
           planets.push(mars);
           break;
 
@@ -750,7 +750,7 @@ insideWorker((event: any) => {
           jupiter.data = event.data.jupiterData as Planet;
           jupiter.data.color = 0xb07f35;
           jupiter.orbitLine = createOrbitLine(jupiter);
-          jupiter.data.speed = calculateSpeedFromVolatility(jupiter, ANIMATION_SPEED);
+          jupiter.data.speed = calculateSpeedFromVolatility(jupiter);
           planets.push(jupiter);
           break;
 
@@ -759,7 +759,7 @@ insideWorker((event: any) => {
           saturn.data = event.data.saturnData as Planet;
           saturn.data.color = 0xb08f36;
           saturn.orbitLine = createOrbitLine(saturn);
-          saturn.data.speed = calculateSpeedFromVolatility(saturn, ANIMATION_SPEED);
+          saturn.data.speed = calculateSpeedFromVolatility(saturn);
           planets.push(saturn);
           break;
 
@@ -768,7 +768,7 @@ insideWorker((event: any) => {
           uranus.data = event.data.uranusData as Planet;
           uranus.data.color = 0x5580aa;
           uranus.orbitLine = createOrbitLine(uranus);
-          uranus.data.speed = calculateSpeedFromVolatility(uranus, ANIMATION_SPEED);
+          uranus.data.speed = calculateSpeedFromVolatility(uranus);
           planets.push(uranus);
           break;
 
@@ -777,7 +777,7 @@ insideWorker((event: any) => {
           neptune.data = event.data.neptuneData as Planet;
           neptune.data.color = 0x366896;
           neptune.orbitLine = createOrbitLine(neptune);
-          neptune.data.speed = calculateSpeedFromVolatility(neptune, ANIMATION_SPEED);
+          neptune.data.speed = calculateSpeedFromVolatility(neptune);
           planets.push(neptune);
           break;
 
