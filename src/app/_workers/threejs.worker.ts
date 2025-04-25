@@ -265,7 +265,7 @@ insideWorker((event: any) => {
       return textures;
     }
 
-    async function loadTextureWithFetch(path: string): Promise<any> {
+    async function loadTextureByPath(path: string): Promise<any> {
       const response = await fetch(path);
       const blob = await response.blob();
       const imageBitmap = await createImageBitmap(blob);
@@ -483,7 +483,6 @@ insideWorker((event: any) => {
         setPlanetPosition(planet);
       });
 
-
       if (targetObject) {
         camera.lookAt(targetObject.position);
       }
@@ -559,7 +558,7 @@ insideWorker((event: any) => {
               texturePath = '../assets/textures/exoplanets/gray.jpg';
             }
 
-            loadTextureWithFetch(texturePath).then((texture) => {
+            loadTextureByPath(texturePath).then((texture) => {
               const newPlanet: Planet = createNewPlanet(planet, position, texture);
               newPlanet.data = planet.data;              
               scene.add(newPlanet.mesh);
