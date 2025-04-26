@@ -1,4 +1,6 @@
 import { Component, AfterViewInit, OnInit } from '@angular/core';
+import { DataService } from './services/data.service';
+import { MonitorService } from './services/monitor.service';
 
 @Component({
   selector: 'app-root',
@@ -6,40 +8,336 @@ import { Component, AfterViewInit, OnInit } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, AfterViewInit {
+  // basic settings
   worker?: Worker;
+  loggingInterval: any;
   canvas?: OffscreenCanvas;
+  startAnimation: boolean = true;
 
-  constructor() { }
+  // measurement
+  cpuUsage: string = '';
+  memoryUsage: string = '';
+  gpuUsage: string = '';
+  fps: string = '';
+
+  // new planet
+  isAddingPlanet = false;
+  newPlanetData: any = {};
+
+  // planets
+  planets: any[] = [];
+  showPlanetsList: boolean = false;
+
+  constructor(private dataService: DataService, private monitorService: MonitorService) { }
 
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
+    this.monitorSystemStats();
   }
 
   ngAfterViewInit() {
-    // connect to worker
     this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));
-
     const htmlCanvas = document.getElementById('canvas') as any;
     htmlCanvas.width = window.innerWidth;
     htmlCanvas.height = window.innerHeight;
+    this.sortPlanetsByDistance();
 
-    var hasOffscreenSupport = !!htmlCanvas.transferControlToOffscreen;
-    if (hasOffscreenSupport) {
-      var offscreen = htmlCanvas.transferControlToOffscreen() as any;
-
-      // send canvas offscreen to worker
+    if (htmlCanvas.transferControlToOffscreen) {
+      const offscreen = htmlCanvas.transferControlToOffscreen() as any;
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
 
-      // event handling and sending to worker
-      htmlCanvas.addEventListener('mousemove', (event: any) => {
+      this.planets.push({
+        name: 'Sun',
+        deletable: false
+      });
+  
+      // mercury
+      let data = this.dataService.getMercuryData();          
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker!.postMessage({ type: 'mercuryData', mercuryData: data });
+      
+      // venus
+      data = this.dataService.getVenusData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'venusData', venusData: data });
+        
+      // earth
+      data = this.dataService.getEarthData();          
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker!.postMessage({ type: 'earthData', earthData: data });
+  
+      data = this.dataService.getMarsData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'marsData', marsData: data });
+  
+      data = this.dataService.getJupiterData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'jupiterData', jupiterData: data });
+  
+      data = this.dataService.getSaturnData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'saturnData', saturnData: data });
+
+      data = this.dataService.getUranusData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'uranusData', uranusData: data });
+  
+      data = this.dataService.getNeptuneData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
+
+      htmlCanvas.addEventListener('mousedown', (event: MouseEvent) => {
+        if (this.worker) {
+          const rect = htmlCanvas.getBoundingClientRect();
+      
+          this.worker.postMessage({
+            type: 'mousedown',
+            mouseX: event.clientX - rect.left,
+            mouseY: event.clientY - rect.top,
+            canvasWidth: htmlCanvas.width,
+            canvasHeight: htmlCanvas.height,
+            planetData: this.newPlanetData
+          });
+      
+          this.isAddingPlanet = false;
+        }
+      });
+
+      htmlCanvas.addEventListener('mouseup', () => {
+        if (this.worker) {
+          this.worker.postMessage({ type: 'mouseup' });
+        }
+      });
+
+      htmlCanvas.addEventListener('mousemove', (event: MouseEvent) => {
         if (this.worker) {
           this.worker.postMessage({
             type: 'mousemove',
             mouseX: event.clientX,
-            mouseY: event.clientY
+            mouseY: event.clientY,
+            planetData: this.newPlanetData
           });
         }
       });
+
+      // window.addEventListener('resize', () => {
+      //   if (this.worker && htmlCanvas) {
+      //     const rect = htmlCanvas.getBoundingClientRect();
+      
+      //     this.worker.postMessage({
+      //       type: 'update_canvas',
+      //       rect: {
+      //         left: rect.left,
+      //         right: rect.right,
+      //         top: rect.top,
+      //         bottom: rect.bottom,
+      //         height: rect.height,
+      //         width: rect.width,
+      //       },
+      //       windowWidth: window.innerWidth,
+      //       windowHeight: window.innerHeight,
+      //       devicePixelRatio: window.devicePixelRatio,
+      //     });
+      //   }
+      // });
+      
+      window.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (this.worker && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          this.worker.postMessage({ type: 'keydown', key: event.key });
+        }
+      });
+
+      window.addEventListener('mousewheel', (event: Event) => {
+        event.preventDefault();
+        const scroll = (event as WheelEvent).deltaY;
+        
+        if (this.worker) {
+          this.worker.postMessage({ type: 'keydown', key: scroll > 0 ? 'ArrowDown' : 'ArrowUp' });
+        }
+      });
+
+      this.worker.onmessage = (event) => {
+        if (event.data.type === 'fps') {
+          this.fps = event.data.fps;
+        }
+      };
+    }
+  }
+
+  // private functions
+  private monitorSystemStats() {
+    if (this.loggingInterval) {
+      clearInterval(this.loggingInterval);
+    }
+  
+    const estimateGpuPower = (renderer: string): number => {
+      const gpuScores: { [key: string]: number } = {
+        'Apple M2': 95,
+        'Apple M1': 85,
+        'Intel': 40,
+        'NVIDIA': 90,
+        'AMD': 80,
+        'ANGLE': 60,
+      };
+  
+      for (const [key, value] of Object.entries(gpuScores)) {
+        if (renderer.includes(key)) return value;
+      }
+      return 50;
+    };
+  
+    let gpuRenderer = 'Unknown GPU';
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const debugInfo = (gl as any).getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        gpuRenderer = (gl as any).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+      }
+    }
+  
+    const gpuScore = estimateGpuPower(gpuRenderer);
+  
+    let lastFrameTime = performance.now();
+    const frameDurations: number[] = [];
+  
+    const measureGPU = () => {
+      const now = performance.now();
+      const duration = now - lastFrameTime;
+      frameDurations.push(duration);
+      if (frameDurations.length > 60) frameDurations.shift();
+  
+      lastFrameTime = now;
+      requestAnimationFrame(measureGPU);
+    };
+    measureGPU();
+  
+    this.loggingInterval = setInterval(() => {
+      let cpuUsage;
+  
+      if (typeof performance !== 'undefined' && (performance as any).memory) {
+        const memoryInfo = (performance as any).memory;
+        const totalJSHeap = memoryInfo.totalJSHeapSize;
+        const usedJSHeap = memoryInfo.usedJSHeapSize;
+        cpuUsage = (totalJSHeap > 0 ? (usedJSHeap / totalJSHeap) * 100 : 0).toFixed(2);
+      }
+  
+      let memoryUsage = 0;
+      if ((performance as any).memory) {
+        const memoryInfo = (performance as any).memory;
+        memoryUsage = parseFloat((memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2));
+      }
+  
+      const gpuUsageFromFPS = Math.max(
+        0,
+        Math.min(100, ((33.33 - Number(this.fps)) / 16.67) * 100)
+      );
+  
+      const finalGpuUsage = ((gpuScore + gpuUsageFromFPS) / 2).toFixed(2);
+  
+      this.monitorService.logMetrics(Number(cpuUsage), memoryUsage, Number(this.fps), Number(finalGpuUsage));
+  
+      this.memoryUsage = `${memoryUsage} MB`;
+      this.cpuUsage = `${cpuUsage}%`;
+      this.gpuUsage = `${finalGpuUsage}%`;
+  
+    }, 1000);
+  }
+
+  private sortPlanetsByDistance(): void {
+    this.planets.sort((a, b) => {
+      const aAxis = a.semimajorAxis ?? 0;
+      const bAxis = b.semimajorAxis ?? 0;
+      return aAxis - bAxis;
+    });
+  }
+
+  // event handlings
+  onShowLines(event: Event) {
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'toggleLines',
+        showLines: (event.target! as HTMLInputElement).checked
+      });
+    }
+  }
+
+  onStartAnimation() {
+    this.startAnimation = !this.startAnimation;
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'toggleAnimation',
+        startAnimation: this.startAnimation
+      });
+    }
+  }
+
+  reloadPage() {
+    window.location.reload();
+  }
+  
+  exportMetricsToCSV(): void {
+    this.monitorService.exportToCSV();
+  }
+
+  startAddingPlanet() {
+    this.isAddingPlanet = true;
+    this.newPlanetData = {
+      name: `Planet ${Math.floor(Math.random() * 1000)}`,
+      color: Math.floor(Math.random() * 0xffffff).toString(),
+      size: 0.2 + Math.random() * 0.5,
+      semimajorAxis: 0,
+      eccentricity: 0,
+      axialTilt: Math.random() * 30,
+    };
+
+    this.planets.push(this.newPlanetData);
+    
+    if (this.worker) {
+      this.worker.postMessage({ 
+        type: 'startAddingPlanet', 
+        planetData: this.newPlanetData 
+      });
+    }
+
+    this.sortPlanetsByDistance();
+  }
+
+  toggleShowPlanetsList() {    
+    this.showPlanetsList = !this.showPlanetsList;
+  }
+
+  followPlanet(planet: any) {
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'followPlanet',
+        planetName: planet.name
+      });
+    }
+  }
+
+  deletePlanet(planet: any) {
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'deletePlanet',
+        planetName: planet.name
+      });
+    }
+    this.planets = this.planets.filter(p => p !== planet);
+    this.sortPlanetsByDistance();
+  }
+
+  ngOnDestroy() {
+    if (this.loggingInterval) {
+      clearInterval(this.loggingInterval);
     }
   }
 }
