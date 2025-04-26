@@ -280,6 +280,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
+  reloadPage() {
+    window.location.reload();
+  }
+  
   exportMetricsToCSV(): void {
     this.monitorService.exportToCSV();
   }

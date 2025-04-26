@@ -15,6 +15,10 @@
       <button (click)="onStartAnimation()" class="btn btn-primary btn-sm mt-2">
         {{ startAnimation ? 'Stop Animation' : 'Start Animation' }}
       </button><br />
+      
+      <button (click)="reloadPage()" class="btn btn-primary btn-sm mt-2">
+        Restart Animation
+      </button><br />
 
       <button (click)="toggleShowPlanetsList()" class="btn btn-primary btn-sm mt-2">
         {{ showPlanetsList ? 'Hide Planets List' : 'Show Planets List' }}

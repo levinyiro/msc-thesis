@@ -180,7 +180,7 @@ insideWorker((event: any) => {
     }
 
     function calculateOrbitDistance(position: any): number {
-      return position.distanceTo(sun.position);
+      return position.distanceTo(sun.position) * DISTANCE_DIVIDER;
     }
 
     function estimateAvgTemperature(distance: number) {
@@ -852,7 +852,8 @@ insideWorker((event: any) => {
           break;
 
         case 'toggleAnimation':
-          animationRunning = event.data.startAnimation;          
+          animationRunning = event.data.startAnimation;     
+          break;     
       }
     };
   }
