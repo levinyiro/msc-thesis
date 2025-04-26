@@ -124,15 +124,15 @@ After that you have to implement the following codes
 - [x] GPU-CPU mérés javítása
 - [x] változtatni a fókuszt más bolygókra
 - [ ] NASA API vizsgálata
-- [ ] Statikus elliptikus pálya
-- [ ] jelenlegi bolygópozíció lekérése
+- [x] Statikus elliptikus pálya
+- [x] jelenlegi bolygópozíció lekérése
 - [ ] resize canvas reload
-- [ ] Még több user interaction
-- [ ] exobolygók számítása - milyen hőmérséklet lehet rajta, mennyire lehet terraformálni
-- [ ] Ezeknek az optimalizálása
-- [ ] lerp camera moving
+- [x] Még több user interaction
+- [x] exobolygók számítása - milyen hőmérséklet lehet rajta, mennyire lehet terraformálni
+- [x] Ezeknek az optimalizálása
+- [x] lerp camera moving
 
-- [ ] források kigyűjtése
+- [x] források kigyűjtése
 
 # 2024.11.
 
