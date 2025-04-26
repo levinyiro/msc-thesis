@@ -43,6 +43,7 @@ insideWorker((event: any) => {
 
     // general settings
     let showLines = true;
+    let animationRunning = true;
     let isDragging = false;
     let targetObject: any;
     let cameraTargetPosition = new THREE.Vector3().copy(camera.position);
@@ -461,27 +462,29 @@ insideWorker((event: any) => {
     });
 
     function animate() {
-      const earth = getPlanetByName('earth');
-      if (earth && moon) {
-        moon.mesh.angle += moon.data!.speed;
-        moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance!;
-        moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance!;
+      if (animationRunning) {
+        const earth = getPlanetByName('earth');
+        if (earth && moon) {
+          moon.mesh.angle += moon.data!.speed;
+          moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance!;
+          moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance!;
+        }
+  
+        planets.forEach(planet => {
+          setPlanetPosition(planet);
+        });
       }
 
       // fps counting
       const nowFps = performance.now();
       frameCount++;
-
+      
       if (nowFps - lastFpsUpdate >= 1000) {
         fps = frameCount;
         frameCount = 0;
         lastFpsUpdate = nowFps;
         postMessage({ type: 'fps', fps: fps });
       }
-
-      planets.forEach(planet => {
-        setPlanetPosition(planet);
-      });
 
       if (targetObject) {
         camera.lookAt(targetObject.position);
@@ -847,6 +850,9 @@ insideWorker((event: any) => {
           }
 
           break;
+
+        case 'toggleAnimation':
+          animationRunning = event.data.startAnimation;          
       }
     };
   }

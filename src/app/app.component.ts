@@ -12,8 +12,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   worker?: Worker;
   loggingInterval: any;
   canvas?: OffscreenCanvas;
+  startAnimation: boolean = true;
 
-  // measuremen
+  // measurement
   cpuUsage: string = '';
   memoryUsage: string = '';
   gpuUsage: string = '';
@@ -32,75 +33,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.canvas = new OffscreenCanvas(window.innerWidth, window.innerHeight);
     this.monitorSystemStats();
-
-    this.planets.push({
-      name: 'Sun',
-      deletable: false
-    });
-
-    this.dataService.getMercuryData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'mercuryData', mercuryData: data });
-      }
-    });
-    
-    this.dataService.getVenusData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'venusData', venusData: data });
-      }
-    });
-
-    this.dataService.getEarthData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'earthData', earthData: data });
-      }
-    });
-
-    this.dataService.getMarsData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'marsData', marsData: data });
-      }
-    });
-
-    this.dataService.getJupiterData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'jupiterData', jupiterData: data });
-      }
-    });
-
-    this.dataService.getSaturnData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'saturnData', saturnData: data });
-      }
-    });
-
-    this.dataService.getUranusData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'uranusData', uranusData: data });
-      }
-    });
-
-    this.dataService.getNeptuneData().subscribe(data => {
-      if (this.worker) {
-        data.name = data.englishName;
-        this.planets.push(data);
-        this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
-      }
-    });
   }
 
   ngAfterViewInit() {
@@ -113,6 +45,54 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (htmlCanvas.transferControlToOffscreen) {
       const offscreen = htmlCanvas.transferControlToOffscreen() as any;
       this.worker.postMessage({ canvas: offscreen }, [offscreen]);
+
+      this.planets.push({
+        name: 'Sun',
+        deletable: false
+      });
+  
+      // mercury
+      let data = this.dataService.getMercuryData();          
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker!.postMessage({ type: 'mercuryData', mercuryData: data });
+      
+      // venus
+      data = this.dataService.getVenusData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'venusData', venusData: data });
+        
+      // earth
+      data = this.dataService.getEarthData();          
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker!.postMessage({ type: 'earthData', earthData: data });
+  
+      data = this.dataService.getMarsData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'marsData', marsData: data });
+  
+      data = this.dataService.getJupiterData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'jupiterData', jupiterData: data });
+  
+      data = this.dataService.getSaturnData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'saturnData', saturnData: data });
+
+      data = this.dataService.getUranusData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'uranusData', uranusData: data });
+  
+      data = this.dataService.getNeptuneData();
+      data.name = data.englishName;
+      this.planets.push(data);
+      this.worker.postMessage({ type: 'neptuneData', neptuneData: data });
 
       htmlCanvas.addEventListener('mousedown', (event: MouseEvent) => {
         if (this.worker) {
@@ -286,6 +266,16 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.worker.postMessage({
         type: 'toggleLines',
         showLines: (event.target! as HTMLInputElement).checked
+      });
+    }
+  }
+
+  onStartAnimation() {
+    this.startAnimation = !this.startAnimation;
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'toggleAnimation',
+        startAnimation: this.startAnimation
       });
     }
   }

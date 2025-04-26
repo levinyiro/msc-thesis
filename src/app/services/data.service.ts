@@ -1,44 +1,41 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
+import planets  from '../data/planets.json';
 
 @Injectable({
     providedIn: 'root'
 })
 export class DataService {
-    private apiUrl = 'https://api.le-systeme-solaire.net/rest.php/bodies';
-
-    constructor(private http: HttpClient) {}
+    constructor() {}
   
-    getMercuryData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/mercury');
+    getMercuryData(): any {
+      return planets.mercury;
     }
 
-    getVenusData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/venus');
+    getVenusData(): any {
+      return planets.venus;
     }
 
-    getEarthData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/terre');
+    getEarthData(): any {
+      return planets.earth;
     }
 
-    getMarsData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/mars');
+    getMarsData(): any {
+      return planets.mars;
     }
 
-    getJupiterData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/jupiter');
+    getJupiterData(): any {
+      return planets.jupiter;
     }
 
-    getSaturnData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/saturne');
+    getSaturnData(): any {
+      return planets.saturn;
     }
 
-    getUranusData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/uranus');
+    getUranusData(): any {
+      return planets.uranus;
     }
 
-    getNeptuneData(): Observable<any> {
-      return this.http.get<any>(this.apiUrl + '/neptune');
+    getNeptuneData(): any {
+      return planets.neptune;
     }
 }
