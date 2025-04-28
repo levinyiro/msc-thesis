@@ -205,15 +205,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   
     this.loggingInterval = setInterval(() => {
       const avgFrameTime = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length || 16.67;
-      const fps = 1000 / avgFrameTime;
-      const gpuLoad = Math.min(100, Math.max(0, ((avgFrameTime - 16) / 17) * 100)); // pontosabb számítás
+      const gpuLoad = Math.min(100, Math.max(0, ((avgFrameTime - 16) / 17) * 100));
       const finalGpuUsage = ((gpuScore / 100) * gpuLoad).toFixed(2);
   
       const memoryInfo = (performance as any).memory || { usedJSHeapSize: 0, totalJSHeapSize: 1 };
       const memoryUsage = +(memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2);
       const cpuUsage = (memoryInfo.usedJSHeapSize / memoryInfo.totalJSHeapSize) * 100;
   
-      this.monitorService.logMetrics(cpuUsage, memoryUsage, fps, Number(finalGpuUsage));
+      this.monitorService.logMetrics(cpuUsage, memoryUsage, Number(this.fps), Number(finalGpuUsage));
   
       this.memoryUsage = `${memoryUsage} MB`;
       this.cpuUsage = `${cpuUsage.toFixed(2)}%`;
