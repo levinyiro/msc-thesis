@@ -872,76 +872,42 @@ export class AppComponent implements OnInit, AfterViewInit {
       clearInterval(this.loggingInterval);
     }
   
-    const estimateGpuPower = (renderer: string): number => {
-      const gpuScores: { [key: string]: number } = {
-        'Apple M2': 95,
-        'Apple M1': 85,
-        'Intel': 40,
-        'NVIDIA': 90,
-        'AMD': 80,
-        'ANGLE': 60,
-      };
-  
-      for (const [key, value] of Object.entries(gpuScores)) {
-        if (renderer.includes(key)) return value;
-      }
-      return 50;
-    };
-  
-    let gpuRenderer = 'Unknown GPU';
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (gl) {
-      const debugInfo = (gl as any).getExtension('WEBGL_debug_renderer_info');
-      if (debugInfo) {
-        gpuRenderer = (gl as any).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-      }
-    }
+    const renderer = (gl as any).getExtension('WEBGL_debug_renderer_info')
+      ? (gl as any).getParameter((gl as any).getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL)
+      : 'Unknown GPU';
   
-    const gpuScore = estimateGpuPower(gpuRenderer);
-  
-    let lastFrameTime = performance.now();
-    const frameDurations: number[] = [];
-  
-    const measureGPU = () => {
-      const now = performance.now();
-      const duration = now - lastFrameTime;
-      frameDurations.push(duration);
-      if (frameDurations.length > 60) frameDurations.shift();
-  
-      lastFrameTime = now;
-      requestAnimationFrame(measureGPU);
+    const estimateGpuPower = (name: string): number => {
+      const scores: { [key: string]: number } = {
+        'Apple M2': 95, 'Apple M1': 85, 'Intel': 40, 'NVIDIA': 90, 'AMD': 80, 'ANGLE': 60
+      };
+      return Object.entries(scores).find(([key]) => name.includes(key))?.[1] ?? 50;
     };
-    measureGPU();
+    const gpuScore = estimateGpuPower(renderer);
+  
+    let lastFrame = performance.now();
+    const frameTimes: number[] = [];
+    const measureFrame = () => {
+      const now = performance.now();
+      frameTimes.push(now - lastFrame);
+      if (frameTimes.length > 100) frameTimes.shift();
+      lastFrame = now;
+      requestAnimationFrame(measureFrame);
+    };
+    measureFrame();
   
     this.loggingInterval = setInterval(() => {
-      let cpuUsage = 0;
+      const avgFrameTime = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length || 16.67;
+      const fps = 1000 / avgFrameTime;
+      const gpuLoad = Math.min(100, Math.max(0, ((avgFrameTime - 16) / 17) * 100)); // pontosabb számítás
+      const finalGpuUsage = ((gpuScore / 100) * gpuLoad).toFixed(2);
   
-      if (typeof performance !== 'undefined' && (performance as any).memory) {
-        const memoryInfo = (performance as any).memory;
-        const totalJSHeap = memoryInfo.totalJSHeapSize;
-        const usedJSHeap = memoryInfo.usedJSHeapSize;
-        cpuUsage = totalJSHeap > 0 ? (usedJSHeap / totalJSHeap) * 100 : 0;
-      }
+      const memoryInfo = (performance as any).memory || { usedJSHeapSize: 0, totalJSHeapSize: 1 };
+      const memoryUsage = +(memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2);
+      const cpuUsage = (memoryInfo.usedJSHeapSize / memoryInfo.totalJSHeapSize) * 100;
   
-      let memoryUsage = 0;
-      if ((performance as any).memory) {
-        const memoryInfo = (performance as any).memory;
-        memoryUsage = parseFloat((memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2));
-      }
-  
-      const avgFrameDuration =
-        frameDurations.reduce((a, b) => a + b, 0) / frameDurations.length || 16.67;
-      const fpsValue = 1000 / avgFrameDuration;
-  
-      const gpuUsageFromFPS = Math.max(
-        0,
-        Math.min(100, ((33.33 - avgFrameDuration) / 16.67) * 100)
-      );
-  
-      const finalGpuUsage = ((gpuScore + gpuUsageFromFPS) / 2).toFixed(2);
-  
-      this.monitorService.logMetrics(cpuUsage, memoryUsage, fpsValue, Number(finalGpuUsage));
+      this.monitorService.logMetrics(cpuUsage, memoryUsage, fps, Number(finalGpuUsage));
   
       this.memoryUsage = `${memoryUsage} MB`;
       this.cpuUsage = `${cpuUsage.toFixed(2)}%`;
