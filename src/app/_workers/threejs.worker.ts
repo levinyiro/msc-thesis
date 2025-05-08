@@ -27,6 +27,7 @@ insideWorker((event: any) => {
     // basic planets
     let sun: any;
     let moon: Planet = {data: {distance: 2, speed: 0.005, angle: 0}};
+    let ringMesh: any;
     
     // fps counting
     let frameCount = 0;
@@ -234,6 +235,11 @@ insideWorker((event: any) => {
       planet.mesh.position.z = r * Math.sin(planet.mesh.angle);
     }
 
+    function updateRingPosition() {
+      ringMesh.position.copy(getPlanetByName('saturn').mesh.position);
+      ringMesh.rotation.set(0, 0, 0);
+    }
+
     async function loadTextures() {
       const textureUrls = [
         { name: 'sunBitmap', url: '../assets/textures/sun.jpg' },
@@ -243,6 +249,7 @@ insideWorker((event: any) => {
         { name: 'marsBitmap', url: '../assets/textures/mars.jpg' },
         { name: 'jupiterBitmap', url: '../assets/textures/jupiter.jpg' },
         { name: 'saturnBitmap', url: '../assets/textures/saturn.jpg' },
+        { name: 'saturnRingBitmap', url: '../assets/textures/saturn-ring.png' },
         { name: 'uranusBitmap', url: '../assets/textures/uranus.jpg' },
         { name: 'neptuneBitmap', url: '../assets/textures/neptune.jpg' },
         { name: 'moonBitmap', url: '../assets/textures/moon.jpg' },
@@ -278,7 +285,7 @@ insideWorker((event: any) => {
     }
 
     loadTextures().then(textures => {
-      const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
+      const { sunBitmap, earthBitmap, mercuryBitmap, venusBitmap, marsBitmap, jupiterBitmap, saturnBitmap, saturnRingBitmap, uranusBitmap, neptuneBitmap, moonBitmap, lensflareBitmap } = textures;
 
       const sunTexture = new THREE.Texture(sunBitmap);
       sunTexture.needsUpdate = true;
@@ -418,6 +425,35 @@ insideWorker((event: any) => {
       saturnSpotLight.target = saturn.mesh;
       scene.add(saturnSpotLight);
       saturn.spotLight = saturnSpotLight;
+      
+      const ringTexture = new THREE.Texture(saturnRingBitmap);
+      ringTexture.needsUpdate = true;
+      ringTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      ringTexture.magFilter = THREE.LinearFilter;
+      ringTexture.generateMipmaps = true;
+      ringTexture.wrapS = THREE.RepeatWrapping;
+      ringTexture.wrapT = THREE.RepeatWrapping;
+      ringTexture.repeat.set(1, 1);
+      const innerRadius = 0.35;
+      const outerRadius = 0.7;
+      const ringSegments = 32;
+      const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, ringSegments);
+      ringGeometry.rotateX(-Math.PI / 2);
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        map: ringTexture,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+      ringMesh.name = 'saturnRing';
+      ringMesh.castShadow = true;
+      ringMesh.receiveShadow = true;
+      ringMesh.position.set(0, 0, 0);
+      ringMesh.rotation.set(0, 0, 0);
+      
+      scene.add(ringMesh);
 
       const uranusTexture = new THREE.Texture(uranusBitmap);
       uranusTexture.needsUpdate = true;
@@ -468,6 +504,10 @@ insideWorker((event: any) => {
           moon.mesh.angle += moon.data!.speed;
           moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance!;
           moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance!;
+        }
+
+        if (getPlanetByName('saturn')) {
+          updateRingPosition();
         }
   
         planets.forEach(planet => {
