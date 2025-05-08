@@ -50,6 +50,7 @@ insideWorker((event: any) => {
     let cameraTargetPosition = new THREE.Vector3().copy(camera.position);
     const DISTANCE_DIVIDER = 3000000;
     const ANIMATION_SPEED = 0.0001;
+    const MIN_DISTANCE = 50;
     
     function addStars(count: number) {
       const starGeometry = new THREE.SphereGeometry(0.3, 8, 8);
@@ -452,7 +453,6 @@ insideWorker((event: any) => {
       ringMesh.receiveShadow = true;
       ringMesh.position.set(0, 0, 0);
       ringMesh.rotation.set(0, 0, 0);
-      
       scene.add(ringMesh);
 
       const uranusTexture = new THREE.Texture(uranusBitmap);
@@ -717,7 +717,13 @@ insideWorker((event: any) => {
           camera.getWorldDirection(direction);
 
           if (event.data.key === 'ArrowUp') {
-            cameraTargetPosition.addScaledVector(direction, step);
+            const newCameraPosition = camera.position.clone().addScaledVector(direction, step);
+
+            const distanceToTarget = newCameraPosition.distanceTo(targetObject.position);
+        
+            if (distanceToTarget > MIN_DISTANCE) {
+              cameraTargetPosition.addScaledVector(direction, step);
+            }
           }
 
           if (event.data.key === 'ArrowDown') {
