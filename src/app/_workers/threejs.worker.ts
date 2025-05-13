@@ -48,8 +48,8 @@ insideWorker((event: any) => {
     let isDragging = false;
     let targetObject: any;
     let cameraTargetPosition = new THREE.Vector3().copy(camera.position);
+    let animationSpeed = 50;
     const DISTANCE_DIVIDER = 3000000;
-    const ANIMATION_SPEED = 0.0001;
     const MIN_DISTANCE = 50;
     
     function addStars(count: number) {
@@ -106,7 +106,7 @@ insideWorker((event: any) => {
       const normalizedEccentricity = eccentricityFactor;
 
       const volatility = normalizedMass + normalizedEccentricity;
-      return ANIMATION_SPEED * (0.5 + volatility * 1.5);
+      return 0.0001 * (0.5 + volatility * 1.5);
     }
 
     function getAxialTiltInRadian(degree: number) {
@@ -222,8 +222,8 @@ insideWorker((event: any) => {
     function setPlanetPosition(planet: Planet) {
       if (!planet.data) return;
 
-      planet.mesh.angle -= planet.data.speed!;
-      planet.mesh.rotation.y += 0.05;
+      planet.mesh.angle -= planet.data.speed! * (animationSpeed / 10);
+      planet.mesh.rotation.y += 0.05 * (animationSpeed / 50);
 
       const semiMajorAxis = planet.data.semimajorAxis! / DISTANCE_DIVIDER;
       const eccentricity = planet.data.eccentricity || 0;
@@ -501,7 +501,7 @@ insideWorker((event: any) => {
       if (animationRunning) {
         const earth = getPlanetByName('earth');
         if (earth && moon) {
-          moon.mesh.angle += moon.data!.speed;
+          moon.mesh.angle += moon.data!.speed! * (animationSpeed / 50);
           moon.mesh.position.x = earth.mesh.position.x + Math.sin(moon.mesh.angle) * moon.data!.distance!;
           moon.mesh.position.z = earth.mesh.position.z + Math.cos(moon.mesh.angle) * moon.data!.distance!;
         }
@@ -874,7 +874,11 @@ insideWorker((event: any) => {
 
         case 'toggleAnimation':
           animationRunning = event.data.startAnimation;     
-          break;     
+          break;  
+          
+        case 'changeAnimationSpeed':
+          animationSpeed = event.data.animationSpeed;          
+          break;
       }
     };
   }

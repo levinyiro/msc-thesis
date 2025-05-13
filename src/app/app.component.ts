@@ -13,6 +13,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   loggingInterval: any;
   canvas?: OffscreenCanvas;
   startAnimation: boolean = true;
+  animationSpeed: number = 50;
 
   // measurement
   cpuUsage: string = '';
@@ -234,6 +235,17 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.worker.postMessage({
         type: 'toggleAnimation',
         startAnimation: this.startAnimation
+      });
+    }
+  }
+
+  onChangeSpeed(event: Event) {
+    this.animationSpeed = (event.target! as HTMLInputElement).value as unknown as number;
+
+    if (this.worker) {
+      this.worker.postMessage({
+        type: 'changeAnimationSpeed',
+        animationSpeed: this.animationSpeed
       });
     }
   }
