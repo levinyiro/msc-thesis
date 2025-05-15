@@ -14,7 +14,7 @@ insideWorker((event: any) => {
     const scene = new THREE.Scene();
 
     // camera settings
-    const camera = new THREE.PerspectiveCamera(30, canvas.width / canvas.height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(30, canvas.width / canvas.height, 0.1, 10000);
     camera.position.z = 200;
     camera.position.y = 40;
     let yaw = 0, pitch = 0;
@@ -53,20 +53,22 @@ insideWorker((event: any) => {
     const MIN_DISTANCE = 50;
     
     function addStars(count: number) {
-      const starGeometry = new THREE.SphereGeometry(0.3, 8, 8);
       const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const sphereRadius = 500;
-
+      const sphereRadius = 5000;
+      
       for (let i = 0; i < count; i++) {
+        const size = Math.random() * 3 + 0.7; 
+        const starGeometry = new THREE.SphereGeometry(size, 8, 8);
         const star = new THREE.Mesh(starGeometry, starMaterial);
-
+    
         const theta = Math.random() * 2 * Math.PI;
         const phi = Math.acos(2 * Math.random() - 1);
-
+    
         star.position.x = sphereRadius * Math.sin(phi) * Math.cos(theta);
         star.position.y = sphereRadius * Math.sin(phi) * Math.sin(theta);
         star.position.z = sphereRadius * Math.cos(phi);
-
+        star.name = 'Star' + i;
+    
         scene.add(star);
       }
     }
@@ -79,7 +81,7 @@ insideWorker((event: any) => {
       const focalDistance = semiMajorAxis * eccentricity;
       
       const points = [];
-      const segments = 100;
+      const segments = 1000;
       for (let i = 0; i <= segments; i++) {
         const angle = (i / segments) * Math.PI * 2;
         const r = (semiMajorAxis * (1 - eccentricity * eccentricity)) / 
@@ -555,7 +557,7 @@ insideWorker((event: any) => {
           if (intersects.length > 0) {
             const intersected = intersects[0].object;
 
-            if (!intersected.name.includes('Orbit')) {
+            if (!intersected.name.includes('Orbit') && !intersected.name.includes('Star')) {
               changeTargetPlanet(intersected);
             }
           }
