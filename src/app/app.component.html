@@ -1,56 +1,63 @@
 <div class="menu ms-2 mt-2">
-    <h2>Menu</h2>
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="" id="inputShowLine" checked (change)="onShowLines($event)">
-        <label class="form-check-label" for="inputShowLine">
-          Show lines
-        </label>
-    </div>
-    <div>
-      <button class="btn btn-sm btn-primary mt-2" (click)="exportMetricsToCSV()">Export Metrics</button><br />
-      <button (click)="startAddingPlanet()" [disabled]="isAddingPlanet" class="btn btn-primary btn-sm mt-2">
-        {{ isAddingPlanet ? 'Click to Place Planet' : 'Add New Planet' }}
-      </button><br />
+  <h2>Menu</h2>
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="inputShowLine" checked (change)="onShowLines($event)">
+    <label class="form-check-label" for="inputShowLine">
+      Show lines
+    </label>
+  </div>
+  <div>
+    <button class="btn btn-sm btn-primary mt-2" (click)="exportMetricsToCSV()">Export Metrics</button><br />
+    <button (click)="startAddingPlanet()" [disabled]="isAddingPlanet" class="btn btn-primary btn-sm mt-2">
+      {{ isAddingPlanet ? 'Click to Place Planet' : 'Add New Planet' }}
+    </button><br />
 
-      <div class="row">
-        <div class="col-2">
-          <button (click)="onStartAnimation()" class="btn btn-primary btn-sm mt-2">
-            <i *ngIf="startAnimation; else playIcon" class="bi bi-pause-fill"></i>
-            <ng-template #playIcon>
-              <i class="bi bi-play-fill"></i>
-            </ng-template>
-          </button><br />
-        </div>
-        <div class="col-10 d-flex align-items-center">
-          <input type="range" class="form-range mt-1" (input)="onChangeSpeed($event)" id="inputAnimationSpeed" min="1" max="5000" step="1" value="{{ animationSpeed }}">
-          <label for="inputAnimationSpeed" class="form-label ms-2 mt-2">{{ animationSpeed }}</label>
-        </div>
+    <div class="row">
+      <div class="col-2">
+        <button (click)="onStartAnimation()" class="btn btn-primary btn-sm mt-2">
+          @if (startAnimation) {
+            <i class="bi bi-pause-fill"></i>
+          } @else {
+            <i class="bi bi-play-fill"></i>
+          }
+        </button><br />
       </div>
-      
-      <button (click)="reloadPage()" class="btn btn-primary btn-sm mt-2">
-        Restart Animation
-      </button><br />
-
-      <button (click)="toggleShowPlanetsList()" class="btn btn-primary btn-sm mt-2">
-        {{ showPlanetsList ? 'Hide Planets List' : 'Show Planets List' }}
-      </button>
-    </div>
-
-    <div class="planet-list" *ngIf="showPlanetsList">
-      <div *ngFor="let planet of planets" class="planet-item row mt-2">
-        <div class="col-6">
-          {{planet.name}}
-        </div>
-        <div class="col-6 d-flex">
-          <button (click)="followPlanet(planet)" class="btn btn-sm btn-primary me-2">
-            Follow
-          </button>
-          <button (click)="deletePlanet(planet)" class="btn btn-sm btn-danger" *ngIf="planet.deletable === undefined">
-            Delete
-          </button>
-        </div>
+      <div class="col-10 d-flex align-items-center">
+        <input type="range" class="form-range mt-1" (input)="onChangeSpeed($event)" id="inputAnimationSpeed" min="1" max="5000" step="1" value="{{ animationSpeed }}">
+        <label for="inputAnimationSpeed" class="form-label ms-2 mt-2">{{ animationSpeed }}</label>
       </div>
     </div>
+
+    <button (click)="reloadPage()" class="btn btn-primary btn-sm mt-2">
+      Restart Animation
+    </button><br />
+
+    <button (click)="toggleShowPlanetsList()" class="btn btn-primary btn-sm mt-2">
+      {{ showPlanetsList ? 'Hide Planets List' : 'Show Planets List' }}
+    </button>
+  </div>
+
+  @if (showPlanetsList) {
+    <div class="planet-list">
+      @for (planet of planets; track planet) {
+        <div class="planet-item row mt-2">
+          <div class="col-6">
+            {{planet.name}}
+          </div>
+          <div class="col-6 d-flex">
+            <button (click)="followPlanet(planet)" class="btn btn-sm btn-primary me-2">
+              Follow
+            </button>
+            @if (planet.deletable === undefined) {
+              <button (click)="deletePlanet(planet)" class="btn btn-sm btn-danger">
+                Delete
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>
 <canvas id="canvas"></canvas>
 
