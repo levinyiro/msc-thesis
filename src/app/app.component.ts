@@ -15,6 +15,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   canvas?: OffscreenCanvas;
   startAnimation: boolean = true;
   animationSpeed: number = 50;
+  isLoading: boolean = true;
 
   // measurement
   cpuUsage: string = '';
@@ -158,6 +159,9 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.worker.onmessage = (event) => {
         if (event.data.type === 'fps') {
           this.fps = event.data.fps;
+        }
+        if (event.data.type === 'ready') {
+          this.isLoading = false;
         }
       };
     }

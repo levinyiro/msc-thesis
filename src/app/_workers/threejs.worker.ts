@@ -492,6 +492,8 @@ addEventListener('message', (event: MessageEvent) => {
         })
       }
 
+      // Notify main thread that worker is ready
+      postMessage({ type: 'ready' });
       animate();
     }).catch(error => {
       console.error('Error loading textures:', error);
