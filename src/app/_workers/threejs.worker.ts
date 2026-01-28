@@ -1,9 +1,7 @@
 import { Planet } from "../models/planet";
+import * as THREE from 'three';
 
-const insideWorker = require("offscreen-canvas/inside-worker");
-const THREE = require('three');
-
-insideWorker((event: any) => {
+addEventListener('message', (event: MessageEvent) => {
   if (event.data.canvas) {
     // basic settings
     const canvas = event.data.canvas;

@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/threejs",
+    "public": "dist/threejs/browser",
     "ignore": [
       "firebase.json",
       "**/.*",

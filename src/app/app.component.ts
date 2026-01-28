@@ -37,7 +37,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.worker = new Worker(new URL('src/app/_workers/threejs.worker.ts', import.meta.url));
+    this.worker = new Worker(new URL('./_workers/threejs.worker.ts', import.meta.url));
     const htmlCanvas = document.getElementById('canvas') as any;
     htmlCanvas.width = window.innerWidth;
     htmlCanvas.height = window.innerHeight;
